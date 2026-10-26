@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark" />
+    <title>SEED / 抓取—折页—桥</title>
+    <style>* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #0b0c0d;
+  color: #e3d9c7;
+  font:
+    15px system-ui,
+    -apple-system,
+    sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 22px;
+  border-bottom: 1px solid #333;
+}
+strong {
+  letter-spacing: 0.14em;
+  color: #ffd787;
+}
+small {
+  display: block;
+  margin-top: 5px;
+  color: #a9a49a;
+}
+a {
+  color: #bcb6a8;
+}
+main {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 76px);
+  height: calc(100dvh - 76px);
+  min-height: 430px;
+}
+#stage {
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #080909;
+  overflow: hidden;
+}
+canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.controls {
+  padding: 10px 20px 12px;
+  border-top: 1px solid #333;
+  background: #141617;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+button,
+select,
+input[type="number"],
+.file {
+  font: inherit;
+  min-height: 44px;
+  border: 1px solid #4a463e;
+  border-radius: 7px;
+  background: #232525;
+  color: #eee3d1;
+  padding: 8px 12px;
+}
+button,
+.file {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:active {
+  background: #514737;
+}
+button:disabled {
+  opacity: 0.4;
+}
+#play {
+  min-width: 90px;
+  background: #e7bd72;
+  color: #141414;
+}
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.file input {
+  width: 1px;
+  height: 1px;
+  position: absolute;
+  opacity: 0;
+}
+.file:focus-within {
+  outline: 2px solid #ffd787;
+}
+input[type="range"] {
+  flex: 1;
+  min-width: 140px;
+  min-height: 44px;
+  accent-color: #e7bd72;
+  touch-action: pan-y;
+}
+input[type="number"] {
+  width: 95px;
+}
+output {
+  font-variant-numeric: tabular-nums;
+}
+#status,
+p {
+  font-size: 12px;
+  color: #b6b1a6;
+}
+p {
+  margin: 8px 0 0;
+}
+body:fullscreen main {
+  height: calc(100dvh - 76px);
+}
+@media (max-width: 700px) {
+  header {
+    padding: 10px;
+  }
+  header a {
+    font-size: 12px;
+  }
+  .controls {
+    padding: 6px 10px;
+  }
+  .row {
+    gap: 6px;
+  }
+  #status {
+    flex-basis: 100%;
+  }
+  main {
+    height: auto;
+    min-height: calc(100dvh - 76px);
+  }
+  #stage {
+    min-height: 45vh;
+  }
+  label {
+    font-size: 12px;
+  }
+}
+#stage {
+  position: relative;
+  background: #000;
+}
+canvas {
+  background: #000;
+}
+.transport {
+  flex-wrap: nowrap;
+}
+#seek {
+  min-width: 60px;
+}
+details {
+  border-top: 1px solid #34382f;
+  padding-top: 7px;
+}
+summary {
+  min-height: 35px;
+  padding: 6px;
+  cursor: pointer;
+  color: #a5b798;
+}
+input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: #b5d18d;
+}
+#debug {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  background: #000b;
+  font: 12px monospace;
+  color: #8aaa98;
+  pointer-events: none;
+}
+#showControls {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  opacity: 0.65;
+}
+body.immersive header,
+body.immersive .controls {
+  display: none;
+}
+body.immersive main {
+  height: 100dvh;
+  min-height: 0;
+}
+body.immersive #stage {
+  min-height: 0;
+}
+#showControls[hidden],
+#debug[hidden] {
+  display: none;
+}
+header strong {
+  font-size: 13px;
+}
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #b0d297;
+}
+@media (max-width: 700px) {
+  .transport {
+    flex-wrap: wrap;
+  }
+  #seek {
+    flex-basis: 100%;
+  }
+  #hideControls {
+    font-size: 12px;
+  }
+  header strong {
+    font-size: 11px;
+  }
+}
+</style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>SEED / A COMPUTATIONAL SHORT</strong
+        ><small>创造片段 / 5.887–13.600秒 · 连续几何试制</small>
+      </div>
+      <a href="docs/README.html">使用说明 ↗</a>
+    </header>
+    <main>
+      <section id="stage" aria-label="ASCII 动画">
+        <canvas id="screen" aria-label="SEED 五幕原创程序动画"></canvas
+        ><output id="debug" hidden></output
+        ><button id="showControls" hidden>显示控制</button>
+      </section>
+      <section class="controls">
+        <div class="row">
+          <label class="file"
+            >加载本地音频<input id="file" type="file" accept="audio/*" /></label
+          ><button id="demo">原创测试音轨</button
+          ><span id="status" role="status"
+            >加载音频后点击播放 · 音频仅在本机处理</span
+          >
+        </div>
+        <div class="row transport">
+          <button id="restart" aria-label="从头开始">↺</button
+          ><button id="back">−5 秒</button><button id="play">播放</button
+          ><button id="forward">+5 秒</button
+          ><output id="time">00:00 / 00:30</output
+          ><input
+            id="seek"
+            aria-label="进度"
+            type="range"
+            min="0"
+            max="30"
+            value="0"
+            step="0.01"
+          /><button id="hideControls">沉浸模式</button>
+        </div>
+        <details>
+          <summary>设置 / 场景与画质</summary>
+          <div class="row">
+            <label
+              >场景
+              <select id="chapter">
+                <option value="0">01 · SYSTEM BOOT</option>
+                <option value="5">02 · MATHEMATICAL CREATION</option>
+                <option value="11">03 · DATA DIMENSION</option>
+                <option value="18">04 · EMERGENT LIFE</option>
+                <option value="25">05 · CONSCIOUSNESS</option>
+              </select></label
+            ><label
+              >字符网格
+              <select id="grid">
+                <option value="100,36">100 × 36 · 标准</option>
+                <option value="128,44">128 × 44 · 精细</option>
+                <option value="80,30">80 × 30 · 性能</option>
+              </select></label
+            ><label
+              >帧率
+              <select id="quality">
+                <option value="30">30 FPS</option>
+                <option value="24">24 FPS</option>
+              </select></label
+            ><label
+              >动画偏移 / 秒
+              <input
+                id="offset"
+                type="number"
+                min="-30"
+                max="30"
+                step="0.05"
+                value="0" /></label
+            ><label
+              ><input id="reactive" type="checkbox" checked />音频响应</label
+            ><label><input id="debugToggle" type="checkbox" />场景与 FPS</label
+            ><button id="fullscreen">全屏</button>
+          </div>
+          <p>
+            仅播放 5.887–13.600 秒。正偏移使动画提前；FFT
+            驱动几何形变、字符密度与运动，并不等于人工校准节拍。无第三方音乐或歌词。
+          </p>
+        </details>
+      </section>
+    </main>
+    <audio id="audio" preload="metadata" playsinline></audio>
+    <script>/* Independent original framework. No upstream implementation or assets. */
+(function (root) {
+  "use strict";
+  const duration = 30;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  function timeline(t, offset) {
+    return clamp(t + offset, 0, duration);
+  }
+  function cellWidth(c) {
+    const n = c.codePointAt(0);
+    if (/\p{Mark}/u.test(c) || n === 0x200d || n === 0xfe0f) return 0;
+    return n >= 0x1100 &&
+      (n <= 0x115f ||
+        n === 0x2329 ||
+        n === 0x232a ||
+        (n >= 0x2e80 && n <= 0xa4cf) ||
+        (n >= 0xac00 && n <= 0xd7a3) ||
+        (n >= 0xf900 && n <= 0xfaff) ||
+        (n >= 0xfe10 && n <= 0xfe6f) ||
+        (n >= 0xff01 && n <= 0xff60) ||
+        (n >= 0xffe0 && n <= 0xffe6) ||
+        n >= 0x1f300)
+      ? 2
+      : 1;
+  }
+  class Grid {
+    constructor(w, h) {
+      this.w = w;
+      this.h = h;
+      this.cells = Array.from({ length: h }, () =>
+        Array.from({ length: w }, () => [" ", 0]),
+      );
+    }
+    put(x, y, s, color = 1) {
+      x = Math.floor(x);
+      y = Math.floor(y);
+      if (y < 0 || y >= this.h) return;
+      for (const ch of String(s)) {
+        const k = cellWidth(ch);
+        if (!k) continue;
+        if (x >= 0 && x + k <= this.w) {
+          for (let j = x; j < x + k; j++) {
+            if (this.cells[y][j][0] === "" && j > 0)
+              this.cells[y][j - 1] = [" ", 0];
+            if (cellWidth(this.cells[y][j][0] || " ") === 2 && j + 1 < this.w)
+              this.cells[y][j + 1] = [" ", 0];
+          }
+          this.cells[y][x] = [ch, color];
+          if (k === 2) this.cells[y][x + 1] = ["", color];
+        }
+        x += k;
+      }
+    }
+    center(y, s, color = 1) {
+      this.put(
+        Math.floor((this.w - [...s].reduce((a, c) => a + cellWidth(c), 0)) / 2),
+        y,
+        s,
+        color,
+      );
+    }
+  }
+  const api = { duration, clamp, timeline, cellWidth, Grid };
+  root.ASCII = api;
+  if (typeof module !== "undefined") module.exports = api;
+})(globalThis);
+</script>
+    <script>(function(R){
+const start=5.887,end=13.6,clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),mix=(a,b,u)=>a+(b-a)*u;
+const ease=(a,b,t)=>{let u=clamp((t-a)/(b-a));return u*u*(3-2*u);};
+const add=(a,b)=>a.map((v,i)=>v+b[i]),sub=(a,b)=>a.map((v,i)=>v-b[i]),mul=(a,s)=>a.map(v=>v*s);
+const stages=[{id:'unfold',name:'机械展开',start:5.887,end:6.934},{id:'grasp',name:'抓取与提起',start:6.934,end:8.321},{id:'sheet',name:'线展开为纸面',start:8.321,end:9.698},{id:'hinge',name:'纸面铰链折叠',start:9.698,end:11.095},{id:'bridge',name:'折面构成桥梁',start:11.095,end:12.472},{id:'reveal',name:'拉远展示',start:12.472,end:13.6}];
+function pose(t,f={}){
+ t=clamp(t,start,end);let deploy=ease(start,6.934,t),lift=ease(7.1,8.321,t),release=ease(9.1,9.698,t),bridge=ease(11.095,12.931,t);
+ const bass=clamp(f.bass||0),pulse=Math.sin((t-7.1)*8)*bass*.045*lift*(1-ease(8.7,9.1,t));
+ let grip=[mix(-1.7,-1.2,lift),mix(1.95,3.25,lift)+pulse,.05];
+ const base=[-4.4,.85,0],target=[mix(grip[0],-3.7,release),mix(grip[1]+.34,3.8,release),0];
+ const shoulder=[base[0],base[1]+.8,0],L1=2.05*mix(.12,1,deploy),L2=2.05*mix(.12,1,deploy);
+ // During deployment end point follows an attainable path. IK then solves both rods exactly.
+ const desired=[mix(shoulder[0]+.12,target[0],deploy),mix(shoulder[1]+.32,target[1],deploy),0];
+ let dx=desired[0]-shoulder[0],dy=desired[1]-shoulder[1],dist=clamp(Math.hypot(dx,dy),.02,L1+L2-.001);
+ const theta=Math.atan2(dy,dx),alpha=Math.acos(clamp((L1*L1+dist*dist-L2*L2)/(2*L1*dist),-1,1));
+ const elbow=[shoulder[0]+L1*Math.cos(theta+alpha),shoulder[1]+L1*Math.sin(theta+alpha),0];
+ const wrist=[shoulder[0]+dist*Math.cos(theta),shoulder[1]+dist*Math.sin(theta),0];
+ const contact=[wrist[0],wrist[1]-.34,.05];
+ // The held endpoint is the same world-space point as the closed fingertips.
+ if(t<9.1)grip=contact;
+ let root=add(grip,[0,0,0]);
+ if(t>=9.1)root=[mix(-1.2,-3.65,ease(9.1,11.8,t)),mix(3.25,2.45,ease(9.1,11.8,t)),.05];
+ let aperture=.35*(1-ease(6.75,7.1,t))+.35*release;
+ const width=2.3*ease(8.321,9.698,t),length=mix(3.5,7.3,ease(8.321,10.167,t));
+ const hinge=(.90*Math.sin(ease(9.698,11.095,t)*Math.PI))*(1-bridge);
+ const points=[];
+ for(let i=0;i<=4;i++){
+  const u=i/4;
+  // Preserve indexed material strips, morph their centerline to an arch.
+  let x=root[0],y=root[1];
+  for(let j=0;j<i;j++){const angle=(j<2?0:hinge);x+=length/4*Math.cos(angle);y+=length/4*Math.sin(angle);}
+  y=mix(y,2.25+1.1*Math.sin(u*Math.PI),bridge);
+  points.push([x,y,root[2]]);
+ }
+ return {t,deploy,lift,release,bridge,base,shoulder,elbow,wrist,contact,grip,root,aperture,width,length,points,L1,L2,hinge};
+}
+class Raster{
+ constructor(w,h,t){this.w=w;this.h=h;this.t=t;this.cells=Array.from({length:h},()=>Array.from({length:w},()=>[' ',0,1]));this.z=new Float32Array(w*h).fill(Infinity);this.scale=mix(1, .80,ease(10.6,13.6,t));this.yaw=mix(-.12,.27,ease(8.5,13.6,t));}
+ project(p){const c=Math.cos(this.yaw),s=Math.sin(this.yaw),X=p[0]*c+p[2]*s,Z=-p[0]*s+p[2]*c;const depth=13+Z,per=13/depth;return [(this.w*.53+X*this.w*.081*this.scale*per),(this.h*.69-(p[1]-1)*this.h*.115*this.scale*per+Z*this.h*.035),depth];}
+ put(x,y,z,ch,col,alpha=1){x=Math.round(x);y=Math.round(y);if(x<0||x>=this.w||y<0||y>=this.h)return;let i=y*this.w+x;if(z<=this.z[i]+.005){this.z[i]=z;this.cells[y][x]=[ch,col,alpha];}}
+ line(a,b,ch=null,col=1,alpha=1){a=this.project(a);b=this.project(b);const n=Math.max(1,Math.ceil(Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]))*2));ch=ch||(Math.abs(a[1]-b[1])<.5?'-':Math.abs(a[0]-b[0])<.5?'|':(a[0]-b[0])*(a[1]-b[1])>0?'\\':'/');for(let i=0;i<=n;i++){let u=i/n;this.put(mix(a[0],b[0],u),mix(a[1],b[1],u),mix(a[2],b[2],u)-.018,ch,col,alpha);}}
+ tri(a,b,c,chars,col,alpha){const p=[a,b,c].map(v=>this.project(v)),[A,B,C]=p;
+ const den=(B[1]-C[1])*(A[0]-C[0])+(C[0]-B[0])*(A[1]-C[1]);if(Math.abs(den)<1e-8)return;
+ const x0=Math.max(0,Math.floor(Math.min(...p.map(v=>v[0])))),x1=Math.min(this.w-1,Math.ceil(Math.max(...p.map(v=>v[0]))));
+ const y0=Math.max(0,Math.floor(Math.min(...p.map(v=>v[1])))),y1=Math.min(this.h-1,Math.ceil(Math.max(...p.map(v=>v[1]))));
+ for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){let u=((B[1]-C[1])*(x-C[0])+(C[0]-B[0])*(y-C[1]))/den,v=((C[1]-A[1])*(x-C[0])+(A[0]-C[0])*(y-C[1]))/den,k=1-u-v;if(u>=0&&v>=0&&k>=0)this.put(x,y,u*A[2]+v*B[2]+k*C[2],chars[(x+y*3)%chars.length],col,alpha);}
+ }
+ face(p,chars='.:',col=1,edges=true,alpha=1){for(let i=1;i<p.length-1;i++)this.tri(p[0],p[i],p[i+1],chars,col,alpha);if(edges)p.forEach((v,i)=>this.line(v,p[(i+1)%p.length],null,col,alpha));}
+ box(x,y,z,w,h,d,col=1){let a=[x,y,z],b=[x+w,y,z],c=[x+w,y+h,z],e=[x,y+h,z];this.face([a,b,c,e],':=;',col);this.face([e,c,add(c,[0,0,d]),add(e,[0,0,d])],'.:-',col);this.face([b,add(b,[0,0,d]),add(c,[0,0,d]),c],'#=:',col);}
+ rod(a,b,width=.16,col=1){const d=sub(b,a),n=Math.hypot(d[0],d[1])||1,off=[-d[1]/n*width,d[0]/n*width,0];const A=add(a,off),B=add(b,off),C=sub(b,off),D=sub(a,off);this.face([A,B,C,D],'=:#',col);this.face([A,B,add(B,[0,0,.22]),add(A,[0,0,.22])],'.:',col);}
+ joint(p,r=.23){let pts=[];for(let i=0;i<12;i++){const a=i/12*Math.PI*2;pts.push(add(p,[Math.cos(a)*r,Math.sin(a)*r,-.04]));}this.face(pts,'#o',1);this.line(add(p,[-r*.4,0,-.07]),add(p,[r*.4,0,-.07]),'+',3);}
+}
+function render(t,w=100,h=36,f={},enabled=true){if(!enabled)f={};const p=pose(t,f),r=new Raster(w,h,p.t);
+ // Dark stage and recessed paper support; all visible surfaces are characters.
+ r.box(-5.3,-.15,-.9,5.3-3.4*p.bridge,.3,2.4,0);r.box(3.4*p.bridge,-.15,-.9,5.2-3.4*p.bridge,.3,2.4,0);
+ const world=p.bridge;r.face([[-7,-.1,1],[-5,1.1,1],[-3.4,-.1,1],[-3.4,-2,1],[-7,-2,1]],'#:.',0);r.face([[3.7,-.1,1],[5.8,1.1,1],[7,-.1,1],[7,-2,1],[3.7,-2,1]],'#:.',0);
+ // Cube base keeps the persistent open corner through panel deployment.
+ r.box(-4.9,.15,-.05,1,.6,.8,1);r.box(-4.9,.75,-.05,.5,.3,.8,1);r.face([[-4.9,1.05,-.05],[-4.9,1.05,.75],[-4.9-1*p.deploy,1.05+.5*p.deploy,.75],[-4.9-1*p.deploy,1.05+.5*p.deploy,-.05]],'.:',1);
+
+ r.rod(p.base,p.shoulder,.20);r.rod(p.shoulder,p.elbow,.16);r.rod(p.elbow,p.wrist,.14);[p.shoulder,p.elbow,p.wrist].forEach(x=>r.joint(x));
+ const tip=p.contact;for(const sign of [-1,1]){const a=add(p.wrist,[sign*.14,-.10,-.06]),b=add(tip,[sign*(.06+p.aperture),.03,-.06]);r.rod(a,b,.055,3);r.line(b,add(tip,[sign*p.aperture,0,0]),'_',1);}
+ // Line's first sample exactly follows the grasp. Once paper grows, line is its leading edge.
+ const spread=ease(8.321,9.698,p.t),lineLength=mix(3.5,p.length,spread);
+ for(let i=0;i<90;i++){let u=i/89;let a=[p.root[0]+u*lineLength,p.root[1]-.7*Math.sin(u*Math.PI)*(1-spread),p.root[2]];let b=[p.root[0]+(u+1/89)*lineLength,p.root[1]-.7*Math.sin((u+1/89)*Math.PI)*(1-spread),p.root[2]];if(p.width<.2)r.line(a,b,'~',3);}
+ // Longitudinal strips share the same hinge vertices: no independently moving edges.
+ if(p.width>.01){for(let i=0;i<4;i++){let A=p.points[i],B=p.points[i+1],z=p.width;const a=add(A,[0,0,-z/2]),b=add(B,[0,0,-z/2]),c=add(B,[0,0,z/2]),d=add(A,[0,0,z/2]);
+  r.face([a,b,c,d],i%2?'.:-':':;=',i%2?3:1);r.face([a,b,add(b,[0,-.12,0]),add(a,[0,-.12,0])],'#=',1);
+  // Sparse crease and ruled markings distinguish a connected thin sheet from mountains.
+  if(i<3)r.line(b,c,'|',0);
+  if(p.bridge>.01){for(const edge of [-1,1]){const aa=add(A,[0,.65*p.bridge,edge*z/2]),bb=add(B,[0,.65*p.bridge,edge*z/2]);r.line(aa,bb,'_',3);for(let k=0;k<3;k++){let u=k/3,base=A.map((v,j)=>mix(v,B[j],u));base[2]+=edge*z/2;r.line(base,add(base,[0,.65*p.bridge,0]),'|',1);}}
+  }
+ }
+ // Piers extrude from the same deck anchors, maintaining contact even while arch grows.
+ for(const i of [0,4]){const q=p.points[i];r.box(q[0]-.25,q[1]-2.1*p.bridge,-p.width*.40,.50,2.1*p.bridge,p.width*.8,1);for(let j=1;j<4;j++)r.line([q[0]-.25,q[1]-j*.5*p.bridge,-p.width*.4-.02],[q[0]+.25,q[1]-j*.5*p.bridge,-p.width*.4-.02],'_',0);}
+ }
+ return r;
+}
+R.Film={start,end,stages,pose,render,Raster};if(typeof module!=='undefined')module.exports=R.Film;
+})(globalThis);
+</script>
+
+    <script>(function(R){
+const timeline=Film.stages;let data={audioSHA256:''};
+const ready=Promise.resolve().then(()=>{data={...{
+  "start":5.887,"end":13.6,"sourceAudioSHA256":"46fc8657336c739b293adab9d366c968a2879f373413714951924190f3ff9513",
+  "timingEvidence":"5.887 is a measured onset after near-silence. Other points are detected onset candidates chosen editorially; no confirmed lyric or beat annotations.",
+  "actions":[
+    {"time":5.887,"end":6.934,"action":"cube-panels-deploy-and-linked-arm-extends","source":"measured-entry + director"},
+    {"time":6.934,"end":7.1,"action":"fingertips-close-on-line","source":"onset candidate + director interpolation"},
+    {"time":7.1,"end":8.321,"action":"lift-anchored-line","source":"director endpoint at onset candidate 8.321"},
+    {"time":8.321,"end":9.698,"action":"line-expands-width-into-continuous-sheet","source":"onset candidates + director"},
+    {"time":9.1,"end":9.698,"action":"release-and-retract-gripper","source":"director"},
+    {"time":9.698,"end":11.095,"action":"shared-edge-hinge-fold-and-open","source":"onset candidates + director"},
+    {"time":11.095,"end":12.931,"action":"same-index-strips-form-arch-piers-and-rails-extrude","source":"director"},
+    {"time":12.472,"end":13.6,"action":"pull-back-final-read","source":"director"}
+  ],"semanticCues":[]
+}
+,audioSHA256:"46fc8657336c739b293adab9d366c968a2879f373413714951924190f3ff9513"};});
+function scene(t){return timeline.find(s=>t<s.end)||timeline[timeline.length-1];}
+R.Director={timeline,ready,scene,render:Film.render,setProfile:()=>{},get data(){return data;}};
+})(globalThis);
+</script>
+    <script>(function (R) {
+  class AudioAnalysis {
+    constructor(audio) {
+      this.audio = audio;
+      this.context = null;
+      this.source = null;
+      this.analyser = null;
+      this.enabled = true;
+      this.failed = false;
+      this.value = { bass: 0, mid: 0, high: 0, rms: 0 };
+    }
+    async unlock() {
+      if (this.failed) return;
+      try {
+        if (!this.context) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) {
+            this.failed = true;
+            return;
+          }
+          this.context = new AC();
+        }
+        if (this.context.state === "suspended") await this.context.resume();
+        if (this.context.state !== "running") return;
+        if (!this.source) {
+          this.source = this.context.createMediaElementSource(this.audio);
+          this.source.connect(this.context.destination);
+          try {
+            this.analyser = this.context.createAnalyser();
+            this.analyser.fftSize = 2048;
+            this.analyser.smoothingTimeConstant = 0.4;
+            this.source.connect(this.analyser);
+            this.freq = new Uint8Array(this.analyser.frequencyBinCount);
+            this.wave = new Uint8Array(this.analyser.fftSize);
+          } catch (e) {
+            this.analyser = null;
+          }
+        }
+      } catch (e) {
+        this.failed = true;
+      }
+    }
+
+    sample() {
+      if (!this.enabled || !this.analyser || this.failed)
+        return { bass: 0, mid: 0, high: 0, rms: 0 };
+      if (this.audio.paused || this.audio.seeking || this.audio.readyState < 3)
+        return this.value;
+      this.analyser.getByteFrequencyData(this.freq);
+      this.analyser.getByteTimeDomainData(this.wave);
+      let sum = 0;
+      for (const x of this.wave) sum += ((x - 128) / 128) ** 2;
+      const binHz=this.context.sampleRate/this.analyser.fftSize;
+      const band=(lo,hi)=>{let sum=0,n=0;for(let i=Math.ceil(lo/binHz);i<Math.min(this.freq.length,hi/binHz);i++){sum+=(this.freq[i]/255)**2;n++;}return Math.min(1,Math.sqrt(sum/Math.max(1,n)));};
+      this.value = {bass:band(35,220),mid:band(220,2200),high:band(2200,9000),rms:Math.min(1,Math.sqrt(sum/this.wave.length)*2.3)};
+      return this.value;
+    }
+    reset() {
+      this.value = { bass: 0, mid: 0, high: 0, rms: 0 };
+    }
+  }
+  R.AudioAnalysis = AudioAnalysis;
+})(globalThis);
+</script>
+    <script>"use strict";
+const $ = (id) => document.getElementById(id),
+  a = $("audio"),
+  canvas = $("screen"),
+  ctx = canvas.getContext("2d");
+let sourceURL = "",
+  scrubbing = false,
+  resume = false,
+  lastKey = "",
+  needsResize = true,
+  isDemo = false;
+const palette = ["#526343", "#e6bf72", "#7bbd83", "#91d9cb"];
+const analysis = new AudioAnalysis(a);
+let lastRender = -1000,
+  frames = 0,
+  fps = 0,
+  fpsSince = 0;
+const previewEnd = () =>
+  Math.min(Film.end, Number.isFinite(a.duration) ? a.duration : Film.end);
+
+const status = (s) => ($("status").textContent = s);
+function duration() {
+  return Number.isFinite(a.duration) ? Math.min(Film.end, a.duration) : 0;
+}
+function seek(t) {
+  if (!duration()) return;
+  a.currentTime = ASCII.clamp(t, Film.start, Math.max(Film.start,duration()));
+  lastKey = "";
+}
+async function play() {
+  if (!a.src) {
+    status("请先加载本地音频或原创测试音频");
+    return;
+  }
+  try {
+    await Director.ready;
+    if (a.ended || a.currentTime >= previewEnd() - 0.02) seek(Film.start);
+    const unlocked = analysis.unlock();
+    const playing = a.play();
+    await playing;
+    await unlocked;
+    if (analysis.failed)
+      status("音频分析不可用，时间轴动画继续；可关闭音频响应。");
+  } catch (e) {
+    status(
+      "播放未启动，请再次点击播放；也可换用 Safari 支持的 MP3 / AAC / WAV。",
+    );
+  }
+}
+$("play").onclick = () => (a.paused ? play() : a.pause());
+function load(blob, demo) {
+  a.pause();
+  a.removeAttribute("src");
+  a.load();
+  if (sourceURL) URL.revokeObjectURL(sourceURL);
+  sourceURL = URL.createObjectURL(blob);
+  a.src = sourceURL;
+  isDemo = demo;
+  Director.setProfile(false);
+  analysis.reset();
+  a.load();
+  status(
+    demo
+      ? "原创测试音轨已加载，点击播放7.7秒片段"
+      : "本地音频已加载 · 实时频段驱动，正在识别校准音轨",
+  );
+  lastKey = "";
+}
+$("file").onchange = (e) => {
+  const file=e.target.files[0];if(!file)return;load(file,false);const selectedURL=sourceURL;
+  (async()=>{try{await Director.ready;const buffer=await file.arrayBuffer();const digest=await crypto.subtle.digest('SHA-256',buffer);const hash=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');if(sourceURL!==selectedURL)return;
+    const match=hash===Director.data.audioSHA256;Director.setProfile(match);status(match?'已识别校准音轨 · 导演动作 + 实时 FFT':'其他音频 · 实时频段响应，分镜仍按提供音轨编排');lastKey='';
+  }catch(e){if(sourceURL===selectedURL)status('实时音频响应可用；音轨识别需要 HTTPS 或 localhost。');}})();
+};
+// Original synthesized arpeggio, pad and pulse; no third-party music.
+$("demo").onclick = () => {
+  const rate = 22050,
+    n = Math.ceil(ASCII.duration * rate),
+    buffer = new ArrayBuffer(44 + n * 2),
+    v = new DataView(buffer);
+  function str(p, s) {
+    for (let i = 0; i < s.length; i++) v.setUint8(p + i, s.charCodeAt(i));
+  }
+  str(0, "RIFF");
+  v.setUint32(4, 36 + n * 2, true);
+  str(8, "WAVE");
+  str(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, "data");
+  v.setUint32(40, n * 2, true);
+  const notes = [130.81, 164.81, 196, 261.63, 220, 196, 164.81, 146.83];
+  for (let i = 0; i < n; i++) {
+    const t = i / rate,
+      beat = t % 0.5,
+      note = notes[Math.floor(t * 2) % notes.length],
+      env = Math.exp(-beat * 8) * Math.min(1, beat * 150);
+    const pad = Math.sin(2 * Math.PI * 65.405 * t) * 0.12;
+    const bell =
+      (Math.sin(2 * Math.PI * note * t) +
+        0.3 * Math.sin(2 * Math.PI * note * 2 * t)) *
+      env *
+      0.25;
+    const pulse =
+      Math.sin(
+        2 * Math.PI * (55 * (t % 0.5) + 4 * (1 - Math.exp(-(t % 0.5) * 20))),
+      ) *
+      Math.exp(-(t % 0.5) * 23) *
+      0.24;
+    const fade = Math.min(1, t * 2, (30 - t) * 2);
+    v.setInt16(
+      44 + i * 2,
+      Math.max(-1, Math.min(1, (pad + bell + pulse) * fade)) * 24000,
+      true,
+    );
+  }
+  load(new Blob([buffer], { type: "audio/wav" }), true);
+};
+$("restart").onclick = () => seek(Film.start);
+$("hideControls").onclick = () => {
+  document.body.classList.add("immersive");
+  $("showControls").hidden = false;
+};
+$("showControls").onclick = () => {
+  document.body.classList.remove("immersive");
+  $("showControls").hidden = true;
+};
+$("reactive").onchange = () => {
+  analysis.enabled = $("reactive").checked;
+  lastKey = "";
+};
+$("debugToggle").onchange = () => {
+  $("debug").hidden = !$("debugToggle").checked;
+};
+a.addEventListener("seeking", () => {
+  analysis.reset();
+  lastKey = "";
+});
+$("back").onclick = () => seek(a.currentTime - 5);
+$("forward").onclick = () => seek(a.currentTime + 5);
+$("chapter").onchange = (e) =>
+  seek(Number(e.target.value) - Number($("offset").value || 0));
+$("grid").onchange = () => {
+  needsResize = true;
+};
+$("offset").oninput = () => {
+  lastKey = "";
+};
+function beginScrub() {
+  if (scrubbing) return;
+  scrubbing = true;
+  resume = !a.paused;
+  a.pause();
+}
+$("seek").oninput = () => {
+  beginScrub();
+  seek(Number($("seek").value));
+};
+function finishScrub() {
+  if (!scrubbing) return;
+  scrubbing = false;
+  if (resume) play();
+  resume = false;
+}
+$("seek").onchange = finishScrub;
+$("seek").addEventListener("pointerup", finishScrub);
+$("seek").addEventListener("pointercancel", finishScrub);
+for (const ev of ["play", "pause", "ended"])
+  a.addEventListener(ev, () => {
+    $("play").textContent = a.paused ? "播放" : "暂停";
+    lastKey = "";
+  });
+a.addEventListener("loadedmetadata", () => {
+  $("seek").max = duration();
+  $("seek").min = Film.start;
+  a.currentTime = Film.start;
+  lastKey = "";
+});
+a.addEventListener("error", () =>
+  status("音频读取失败，请选择 Safari 支持的 MP3 / AAC / WAV 文件。"),
+);
+$("fullscreen").onclick = async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen)
+      await document.documentElement.requestFullscreen();
+    else status("此 Safari 不支持网页全屏，可通过“添加到主屏幕”打开。");
+  } catch (e) {
+    status("无法进入全屏，可使用 Safari“添加到主屏幕”。");
+  }
+};
+new ResizeObserver(() => {
+  needsResize = true;
+}).observe($("stage"));
+document.addEventListener("visibilitychange", () => {
+  needsResize = true;
+  lastKey = "";
+});
+document.addEventListener("keydown", (e) => {
+  if (/INPUT|SELECT|BUTTON/.test(e.target.tagName)) return;
+  if (e.code === "Space") {
+    e.preventDefault();
+    $("play").click();
+  }
+  if (e.code === "ArrowRight") seek(a.currentTime + 5);
+  if (e.code === "ArrowLeft") seek(a.currentTime - 5);
+});
+function stamp(t) {
+  return `${String(Math.floor(t / 60)).padStart(2, "0")}:${(t % 60).toFixed(1).padStart(4, "0")}`;
+}
+function loop(now) {
+  if (a.currentTime >= previewEnd() && !a.paused) {
+    a.pause();
+    a.currentTime = previewEnd();
+  }
+  const [w, h] = $("grid").value.split(",").map(Number),
+    t = ASCII.timeline(a.currentTime, Number($("offset").value) || 0),
+    key = `${t.toFixed(4)},${w},${h},${$("reactive").checked}`;
+  if (needsResize) {
+    const r = $("stage").getBoundingClientRect(),
+      ratio = 16 / 9;
+    const width = Math.min(r.width, r.height * ratio),
+      height = width / ratio,
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    needsResize = false;
+    lastKey = "";
+  }
+  if (
+    key !== lastKey &&
+    now - lastRender >= 1000 / Number($("quality").value) - 1
+  ) {
+    lastRender =
+      now - ((now - lastRender) % (1000 / Number($("quality").value)));
+    const features = analysis.sample();
+    const g = Director.render(t, w, h, features, $("reactive").checked),
+      cw = canvas.width / w,
+      ch = canvas.height / h;
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = `${Math.min(ch * 0.94, cw * 1.65)}px ui-monospace, Menlo, monospace`;
+    ctx.textBaseline = "middle";
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const [char, color, alpha = 1] = g.cells[y][x];
+        if (char && char !== " " && alpha > 0.01) {
+          ctx.globalAlpha = Math.min(
+            1,
+            alpha *
+              (0.93 + 0.07 * Math.cos(y * 0.8 - t * 2)) *
+              (1 + Math.min(0.06, features.rms * 0.2)),
+          );
+          ctx.fillStyle = palette[color];
+          ctx.fillText(
+            char,
+            x * cw,
+            (y + 0.5) * ch,
+            cw * ASCII.cellWidth(char),
+          );
+        }
+      }
+    ctx.globalAlpha = 1;
+    lastKey = key;
+    frames++;
+  }
+  if (now - fpsSince > 1000) {
+    fps = Math.round((frames * 1000) / (now - fpsSince));
+    frames = 0;
+    fpsSince = now;
+  }
+  canvas.dataset.scene = (Director.scene(t)?.id || "loading");
+  canvas.dataset.time = t.toFixed(3);
+  $("debug").textContent =
+    `${(Director.scene(t)?.name || "LOADING TIMELINE")} | ${t.toFixed(2)}s | ${fps} FPS | ${analysis.analyser && !analysis.failed ? "FFT ready" : "FFT off"}`;
+  if (!scrubbing) $("seek").value = a.currentTime;
+  $("time").textContent = stamp(a.currentTime) + " / " + stamp(previewEnd());
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+Director.ready.then(()=>{const menu=$("chapter");menu.replaceChildren(...Director.timeline.map((s,i)=>{const o=document.createElement('option');o.value=s.start;o.textContent=`0${i+1} · ${s.name} / ${s.start.toFixed(3)}s`;return o;}));lastKey='';}).catch(e=>status('时间轴加载失败，请通过 HTTP/HTTPS 打开网页并检查 music-timeline.json'));
+</script>
+  </body>
+</html>
