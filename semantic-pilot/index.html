@@ -1,0 +1,160 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>SEED / Semantic Pilot</title><style>*{box-sizing:border-box}html,body{margin:0;background:#070b0a;color:#b3bfae;font:13px ui-monospace,Menlo,Consolas,monospace;height:100%;color-scheme:dark}body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}header{height:74px;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #283a2e}b{color:#efc884;letter-spacing:.23em;font-size:19px}b span{font-size:12px;color:#79977e;letter-spacing:.12em}small{display:block;font-size:10px;margin-top:7px;letter-spacing:.07em}main{height:calc(100% - 74px);display:flex;flex-direction:column}#stage{position:relative;flex:1;min-height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#020605}canvas{display:block;max-width:100%;max-height:100%;aspect-ratio:16/9}#controls{padding:10px 20px 12px;border-top:1px solid #283a2e;background:#0c120f}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}button,select,.file{border:1px solid #40533e;border-radius:3px;background:#131d17;color:#c9d7bd;min-height:44px;padding:8px 12px;font:inherit;cursor:pointer;touch-action:manipulation}button:hover,.file:hover{border-color:#e8be76}#play{color:#f7d393}input[type=file]{position:absolute;width:1px;height:1px;opacity:0}input[type=range]{width:100%;height:26px;accent-color:#e6bd78;touch-action:pan-y}.bottom{font-size:11px}#status{flex:1;min-width:180px;color:#809380}output{margin-left:auto;color:#e6bd78}.immersive header,.immersive #controls{display:none}.immersive main{height:100%}.immersive #stage{cursor:pointer}@media(max-width:700px){header{height:62px;padding:9px 12px}b span{display:none}main{height:calc(100% - 62px)}#controls{padding:6px 10px}.row{gap:5px}button,select,.file{font-size:11px;padding:6px 9px}.bottom #status{font-size:10px}small{font-size:8px}}
+
+#stage:after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 65px 10px rgba(0,0,0,.2)}
+</style></head><body>
+<header><div><b>SEED<span> / SEMANTIC PILOT</span></b><small>PRIVATE STUDY · 11.200 — 21.600 · CREATE / CONFIGURE / INITIALIZE / LIVE</small></div><button id="immersive">沉浸 / 返回</button></header>
+<main><div id="stage"><canvas id="screen" width="1400" height="788" aria-label="SEED ASCII 音乐影像"></canvas></div><section id="controls"><div class="row"><label class="file">导入本地音乐<input id="file" type="file" accept="audio/*"></label><button id="play">播放</button><button id="restart">回到起点</button><button id="silent">无声预览</button><select id="grid" aria-label="字符精度"><option value="100,36">100 × 36 标准</option><option value="128,44">128 × 44 精细</option><option value="80,30">80 × 30 性能</option></select><select id="fps" aria-label="帧率"><option>30</option><option>24</option></select><output id="time">11.200</output></div><input id="seek" type="range" min="11.200" max="21.600" step="0.001" value="11.200" aria-label="时间轴"><div class="row bottom"><select id="chapter" aria-label="镜头"><option value="11.200">01 / 对象创建</option><option value="13.280">02 / 参数赋予</option><option value="16.120">03 / 世界初始化</option><option value="18.560">04 / 模拟生长</option></select><label><input id="crt" type="checkbox" checked> CRT</label><span id="status">音乐仅在本机读取。请导入完整歌曲；无声预览使用独立演示时钟。</span></div></section></main><audio id="audio" preload="auto" playsinline></audio><script>
+/* SEED: a persistent simulated organism. Original character scenes, no lyric text. */
+(function(R){'use strict';
+const START=11.2,END=21.6,cuts=[START,13.28,16.12,18.56,END];
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),mix=(a,b,t)=>a+(b-a)*t;
+function ease(a,b,t){let u=clamp((t-a)/(b-a));return u*u*(3-2*u)}
+function scene(t){return t<cuts[1]?0:t<cuts[2]?1:t<cuts[3]?2:3}
+function state(t){return {objectID:'SEED-001',assembly:ease(START,13.08,t),water:ease(13.5,15.8,t),light:ease(14.5,16.1,t),world:ease(16.8,18.56,t),growth:ease(18.9,21.25,t),running:t>=18.56}}
+class Grid{constructor(w,h){this.w=w;this.h=h;this.ch=Array(w*h).fill(' ');this.col=Array(w*h).fill(0)}put(x,y,c,col=2){x=Math.floor(x);y=Math.floor(y);if(x>=0&&y>=0&&x<this.w&&y<this.h){this.ch[y*this.w+x]=c;this.col[y*this.w+x]=col}}text(x,y,s,col=2){[...s].forEach((c,i)=>this.put(x+i,y,c,col))}box(x,y,w,h,label,col=2){for(let j=0;j<h;j++)for(let i=0;i<w;i++)this.put(x+i,y+j,j===0||j===h-1?(i===0||i===w-1?'+':'-'):(i===0||i===w-1?'|':' '),col);if(label)this.text(x+2,y,' '+label+' ',col)}}
+function line(g,x0,y0,x1,y1,c='=',col=2){let n=Math.max(1,Math.ceil(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))));for(let i=0;i<=n;i++)g.put(mix(x0,x1,i/n),mix(y0,y1,i/n),c,col)}
+function back(g,t){let w=g.w,h=g.h;for(let y=2;y<h-2;y++)for(let x=0;x<w;x++){let c=y%5===0?(x%10===0?'+':'-'):(x%10===0?'|':'.');g.put(x,y,c,0)}g.text(3,1,'SEED / SYNTHETIC BOTANY LAB',1);g.text(w-22,1,'SPECIMEN 001',3);line(g,2,h-2,w-3,h-2,'=',0)}
+function bar(g,x,y,w,value,col=3){for(let i=0;i<w;i++)g.put(x+i,y,i<w*value?'#':'.',i<w*value?col:0)}
+function panel(g,x,y,w,h,name,rows){g.box(x,y,w,h,name,2);rows.forEach((s,i)=>{if(i<h-3)g.text(x+2,y+2+i,s.slice(0,w-4),i===0?1:2)})}
+// Teardrop-shaped filled seed with a continuous shell, tissue and embryonic shoot.
+function seed(g,cx,cy,rx,ry,t,s,preview=false){for(let y=Math.floor(cy-ry);y<=cy+ry;y++)for(let x=Math.floor(cx-rx);x<=cx+rx;x++){let Y=(y-cy)/ry,X=(x-cx)/(rx*(.7+.3*(Y+1)/2)),v=X*X+Y*Y;if(v>1)continue;let by=Math.floor((y-(cy-ry))/2);if(by/Math.max(1,ry)>s.assembly)continue;let split=s.growth*rx*.4*(X<0?-1:1);let xx=x+split,pattern=(Math.floor(x-cx)+Math.floor(y-cy)+200)%6;let c,col;if(v>.76){c='@#H'[(x+y)%3];col=1}else if(Math.abs(X+.12*Math.sin(Y*4))<.13){c=Y<0?'Y':'|';col=3}else{c=':;xo=+'[pattern];col=preview&&Y>1-s.water*2?3:0;if(preview&&Math.abs(X)<.36&&Y<-.15&&s.light>.3){c='Y';col=2}}g.put(xx,y,c,col)}
+ let floor=Math.floor(cy+ry+1);g.text(Math.floor(cx-6),floor,'[ SEED-001 ]',1)}
+function shell(g,t,s){let w=g.w,h=g.h,cx=w*.5,cy=h*.48,rx=w*.14,ry=h*.31;
+ seed(g,cx,cy,rx,ry,t,s,scene(t)===1);
+ let phase=scene(t),rows=phase===0?['OBJECT / 001','TYPE: ORGANISM','SHELL: '+Math.floor(s.assembly*100)+'%','TISSUE: SYNTH','EMBRYO: HELD','STATUS: ASSEMBLY']:['OBJECT / 001','TYPE: ORGANISM','WATER: '+s.water.toFixed(2),'LIGHT: '+s.light.toFixed(2),'RULE: GROWTH','STATUS: CONFIG'];
+ panel(g,3,4,Math.floor(w*.26),Math.floor(h*.65),'REGISTRY',rows);
+ let plotX=5,plotY=Math.floor(h*.39),plotW=Math.floor(w*.22),plotH=Math.floor(h*.24);g.text(plotX,plotY-1,'TISSUE / VALIDATION',3);for(let xx=0;xx<plotW;xx++){let hh=2+(xx*7%Math.max(2,plotH-2));for(let yy=0;yy<hh;yy++)g.put(plotX+xx,plotY+plotH-yy,yy===hh-1?'+':':',yy===hh-1?1:0)}g.text(plotX,plotY+plotH+2,'0x001 / LOCKED',2);let x=Math.floor(w*.73),pw=w-x-3;
+ panel(g,x,4,pw,Math.floor(h*.65),phase===0?'SECTION A-A':'PARAMETERS',phase===0?['01 / TESTA','02 / TISSUE','03 / EMBRYO','04 / MEMORY','CHECKSUM: PASS','ORIGIN: LOCAL']:['SOIL / BOUND','WATER / INPUT','LIGHT / INPUT','LEAF / OUTPUT','AGE / 0','CLOCK / HELD']);
+ if(phase===0){let yy=Math.floor(h*.46);g.text(x+2,yy,'GENOME / PAGE 01',3);for(let j=1;j<7;j++)g.text(x+2,yy+j,('AT:GC 01|10 ACTG:'+(j*103).toString(16)).slice(0,pw-4),j%3===0?1:0)}for(let yy=7;yy<h-7;yy+=5){line(g,w*.3,yy,cx-rx-2,yy,'-',0);line(g,cx+rx+2,yy,w*.72,yy,'-',0);g.put(cx-rx-2,yy,'+',1);g.put(cx+rx+2,yy,'+',1)}
+ if(phase===0){let scan=Math.floor(mix(h*.2,h*.8,s.assembly));line(g,w*.31,scan,w*.69,scan,'=',3);g.text(Math.floor(w*.33),h-4,'01 / OBJECT CREATED',1)}else{let y=Math.floor(h*.47);g.text(x+2,y,'H2O',3);bar(g,x+2,y+1,pw-5,s.water,3);g.text(x+2,y+3,'PHOTON',1);bar(g,x+2,y+4,pw-5,s.light,1);let tx=Math.floor(mix(x,cx+rx+1,ease(13.5,16,t)));for(let i=0;i<4;i++)g.text(tx+i*2,Math.floor(cy-3+i*2),'<<',3);g.text(Math.floor(w*.32),h-4,'02 / VALUES -> ORGANISM',1)}
+ g.text(3,h-1,phase===0?'ALLOCATE > ENCODE TISSUE > PRESERVE IDENTITY':'INPUTS ARE BOUND. THE CLOCK IS STILL STOPPED.',2);
+}
+// A leaf is a textured, filled lance, with a midrib and directional side veins.
+function leaf(g,ax,ay,bx,by,width,age,t,col=2){let dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy;if(L<1||age<.03)return;bx=mix(ax,bx,age);by=mix(ay,by,age);dx=bx-ax;dy=by-ay;L=dx*dx+dy*dy;let minX=Math.floor(Math.min(ax,bx)-width),maxX=Math.ceil(Math.max(ax,bx)+width),minY=Math.floor(Math.min(ay,by)-width*.6),maxY=Math.ceil(Math.max(ay,by)+width*.6);
+ for(let y=Math.max(3,minY);y<=maxY;y++)for(let x=minX;x<=maxX;x++){let u=((x-ax)*dx+(y-ay)*dy)/L,dist=((x-ax)*(-dy)+(y-ay)*dx)/Math.sqrt(L),shape=Math.sin(clamp(u)*Math.PI)*width*age;if(u<0||u>1||Math.abs(dist)>shape)continue;let vein=Math.abs(dist)<.65||Math.abs((u*10+Math.abs(dist)*.55)%2)<.35;g.put(x,y,Math.abs(dist)<.65?'=':vein?'/':'xH#'[(x+y+300)%3],vein?1:col)}}
+function terrain(g,t,s){let w=g.w,h=g.h;for(let y=2;y<h-3;y++)for(let x=0;x<w;x++){let hill=h*.62+Math.sin(x/w*8)*h*.045;let dist=y-hill;if(dist>0){let plot=(Math.floor(x/8)+Math.floor(dist/3))%2;g.put(x,y,Math.floor(dist)%4===0?'_':plot?':':';',0)}else{g.put(x,y,y%6===0?'_':x%12===0?':':'.',0)}}
+ // Faceted glazed roof establishes an enclosed growing chamber, not an empty sky.
+ for(let y=3;y<h*.3;y++){let u=(y-3)/(h*.3-3),left=Math.floor(w*(.31-u*.13)),right=w-left;for(let x=left;x<right;x++){let edge=x<=left+1||x>=right-2,beam=(x-Math.floor(w*.5))%Math.max(5,Math.floor(w*.1))===0;g.put(x,y,edge?(x<w*.5?'/':'\\'):beam?'|':(x+y)%4===0?'/':':',edge||beam?2:0)}}
+ // Storage racks give the initialized world real surfaces and recognizable depth.
+ for(let side=0;side<2;side++){let x0=side?Math.floor(w*.78):5,rw=Math.floor(w*.17),y0=Math.floor(h*.2),rh=Math.floor(h*.45);g.box(x0,y0,rw,rh,side?'WATER':'LIGHT',2);for(let y=y0+2;y<y0+rh-1;y++)for(let x=x0+1;x<x0+rw-1;x++){let shelf=(y-y0)%4===0;g.put(x,y,shelf?'=':x%4===0?'|':(y-y0)%4===1?'H':':',shelf?1:0)}g.text(x0+2,y0+rh-2,side?'H2O 001':'LED 001',3)}
+ // Framed greenhouse side walls, louvered light source and terraced soil.
+ for(let side=0;side<2;side++){let x=side?w-4:3;line(g,x,3,x,h-4,'|',2);for(let y=4;y<h*.6;y+=3)line(g,side?w-14:4,y,side?w-5:13,y,'=',0)}
+ for(let y=Math.floor(h*.72);y<h-3;y+=3)line(g,5,y,w-6,y,'_',2);
+ for(let x=6;x<w-6;x+=12){let y=h*.7+(x%3);line(g,x,y,x+4,y-2,'/',0);g.put(x+4,y-2,'v',2)}
+ let sun=s.running?ease(19.8,20.773,t):0;for(let x=15;x<w-15;x++){if(x%6===0)line(g,x,3,x+2,6,'/',sun>.3?1:0);else g.put(x,3,sun>.6?'=':'-',sun>.6?1:0)}
+}
+function roots(g,cx,cy,spread,depth,age){if(age<.01)return;for(let k=0;k<7;k++){let x2=cx+(k-3)*spread/3*age,y2=cy+depth*(.55+(k%3)*.2)*age;line(g,cx,cy,x2,y2,k%2?'/':'\\',k%3?0:1);line(g,x2,y2,x2+(k-3)*1.4,y2+depth*.17,'|',0)}}
+function habitat(g,t,s){let w=g.w,h=g.h;terrain(g,t,s);let run=s.running,u=s.growth;
+ // Same ID and seed remain in the center; camera eases out to reveal its substrate.
+ let pull=ease(16.12,18.56,t),cx=w*.5,cy=mix(h*.48,h*.71,pull),rx=mix(w*.14,w*.055,pull),ry=mix(h*.31,h*.095,pull);
+ if(pull<1){let edge=pull*w*.5;for(let y=3;y<h-3;y++)for(let x=0;x<w;x++)if(x< w*.5-edge||x>w*.5+edge)g.put(x,y,x%5===0?'|':'=',0)}
+ seed(g,cx,cy,rx,ry,t,s);roots(g,cx,cy+ry,w*.23,h*.14,u);
+ let top=cy-h*.5*u;line(g,cx,cy-ry*.4,cx,top,'|',1);line(g,cx+1,cy-ry*.4,cx+1,top,'|',2);
+ const leaves=[[-1,.28,.21,.17], [1,.35,.23,.13],[-1,.55,.28,.15],[1,.65,.27,.17],[-1,.8,.2,.16],[1,.94,.16,.16]];
+ leaves.forEach((a,i)=>{let [side,height,reach,rise]=a,age=ease(.08+i*.1,.42+i*.09,u),ay=cy-h*.5*height*u,bx=cx+side*w*reach,by=ay-h*rise;line(g,cx,ay,mix(cx,bx,age*.7),mix(ay,by,age*.7),side<0?'/':'\\',2);leaf(g,cx,ay,bx,by,w*.038,age,t,i%2?2:3)});
+ // Environment is an input/output loop: visible light, irrigation, growth traces.
+ if(run){for(let k=0;k<8;k++){let x=w*.17+k*w*.094,y=5+((t*7+k*3)%Math.max(1,h*.47));if(y<h*.63)g.put(x,y,':',3)}let bx=Math.floor(w*.79),by=Math.floor(h*.77);g.box(bx,by,Math.floor(w*.18),5,'OUTPUT',2);bar(g,bx+2,by+2,Math.floor(w*.14),u,2);g.text(bx+2,by+3,'AGE '+(t-18.56).toFixed(1),1)}
+ for(let x=0;x<w;x++)g.put(x,1,' ',0);g.text(3,1,run?'SEED / SIMULATION RUNNING':'SEED / HABITAT INITIALIZATION',1);g.text(w-22,1,'SPECIMEN 001',3);
+ g.text(5,h-3,run?'LIGHT -> LEAF -> GROWTH -> NEXT TICK':'WORLD BOUNDS SET / CLOCK = 0',2);
+ g.text(3,h-1,run?'04 / A RULE HAS BECOME A LIVING WORLD':'03 / AN OBJECT RECEIVES ITS WORLD',1);
+ if(t>=20.773){g.text(w-27,5,'TICK 001 / CONTINUE',1);line(g,4,2,w-5,2,'=',3)}
+}
+function render(t,w=100,h=36){t=clamp(t,START,END);let g=new Grid(w,h),s=state(t);back(g,t);if(t<16.12)shell(g,t,s);else habitat(g,t,s);return g}
+R.Seed={START,END,cuts,state,scene,render,Grid};if(typeof module!=='undefined')module.exports=R.Seed;
+})(typeof window!=='undefined'?window:globalThis);
+
+</script><script>
+(function (R) {
+  class AudioAnalysis {
+    constructor(audio) {
+      this.audio = audio;
+      this.context = null;
+      this.source = null;
+      this.analyser = null;
+      this.enabled = true;
+      this.failed = false;
+      this.value = { bass: 0, rms: 0 };
+    }
+    async unlock() {
+      if (this.failed) return;
+      try {
+        if (!this.context) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) {
+            this.failed = true;
+            return;
+          }
+          this.context = new AC();
+        }
+        if (this.context.state === "suspended") await this.context.resume();
+        if (this.context.state !== "running") return;
+        if (!this.source) {
+          this.source = this.context.createMediaElementSource(this.audio);
+          this.source.connect(this.context.destination);
+          try {
+            this.analyser = this.context.createAnalyser();
+            this.analyser.fftSize = 1024;
+            this.analyser.smoothingTimeConstant = 0.4;
+            this.source.connect(this.analyser);
+            this.freq = new Uint8Array(this.analyser.frequencyBinCount);
+            this.wave = new Uint8Array(this.analyser.fftSize);
+          } catch (e) {
+            this.analyser = null;
+          }
+        }
+      } catch (e) {
+        this.failed = true;
+      }
+    }
+
+    sample() {
+      if (!this.enabled || !this.analyser || this.failed)
+        return { bass: 0, rms: 0 };
+      if (this.audio.paused || this.audio.seeking || this.audio.readyState < 3)
+        return this.value;
+      this.analyser.getByteFrequencyData(this.freq);
+      this.analyser.getByteTimeDomainData(this.wave);
+      let sum = 0;
+      for (const x of this.wave) sum += ((x - 128) / 128) ** 2;
+      let bass = 0;
+      const n = Math.max(1, Math.floor(220 / (this.context.sampleRate / 1024)));
+      for (let i = 1; i <= n; i++) bass += this.freq[i] / 255;
+      this.value = { bass: bass / n, rms: Math.sqrt(sum / this.wave.length) };
+      return this.value;
+    }
+    reset() {
+      this.value = { bass: 0, rms: 0 };
+    }
+  }
+  R.AudioAnalysis = AudioAnalysis;
+})(globalThis);
+
+</script><script>
+'use strict';
+const $=id=>document.getElementById(id),audio=$('audio'),canvas=$('screen'),ctx=canvas.getContext('2d',{alpha:false}),analysis=new AudioAnalysis(audio);
+const palette=['#375449','#efca86','#78b785','#a0e3d2'];
+let url='',silent=false,running=false,silentT=Seed.START,anchor=0,last=-1,lastKey='',atlas=null,activeGrid='',frameCount=0,frameStart=0,measuredFPS=0,previous=null,previousCRT=null;
+const status=s=>$('status').textContent=s;
+function clock(){return silent?(running?Math.min(Seed.END,silentT+(performance.now()-anchor)/1000):silentT):(audio.src?Math.max(Seed.START,Math.min(Seed.END,audio.currentTime)):silentT)}
+function stop(){if(silent){silentT=clock();running=false}else audio.pause();$('play').textContent='播放'}
+function seek(t){t=Math.max(Seed.START,Math.min(Seed.END,t));analysis.reset();if(silent||!audio.src){silentT=t;anchor=performance.now()}else audio.currentTime=t;lastKey='';paint(t)}
+async function play(){if(!silent&&!audio.src){status('请导入本地完整音乐，或点击无声预览');return}if(clock()>=Seed.END-.025)seek(Seed.START);if(silent){anchor=performance.now();running=true}else{try{const unlock=analysis.unlock();await audio.play();await unlock}catch(e){status('未能播放，请再次点击，或选择 Safari 支持的 MP3 / AAC 文件');return}}$('play').textContent='暂停'}
+$('play').onclick=()=>((silent?running:!audio.paused)?stop():play());$('restart').onclick=()=>seek(Seed.START);
+$('silent').onclick=()=>{stop();silent=true;silentT=Seed.START;lastKey='';status('无声演示：独立时钟；导入音乐后切回音频主时钟');play()};
+$('file').onchange=e=>{let f=e.target.files[0];if(!f)return;stop();silent=false;audio.removeAttribute('src');audio.load();if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(f);audio.src=url;audio.load();status('读取本地音频…')};
+audio.addEventListener('loadedmetadata',()=>{if(audio.duration<Seed.END){status('音频短于 21.600 秒。请导入完整歌曲，不能使用裁切片段');audio.removeAttribute('src');audio.load();return}seek(Seed.START);status('本地音频就绪 · HTMLAudioElement 主时钟 · 点击播放')});
+audio.addEventListener('error',()=>status('音频无法解码，请选择 MP3 / AAC / WAV 文件'));
+audio.addEventListener('seeking',()=>{analysis.reset();lastKey=''});audio.addEventListener('pause',()=>{$('play').textContent='播放'});audio.addEventListener('ended',stop);
+$('seek').oninput=e=>seek(+e.target.value);$('chapter').onchange=e=>seek(+e.target.value);$('grid').onchange=()=>{atlas=null;lastKey='';paint(clock())};$('crt').onchange=()=>{lastKey='';paint(clock())};
+$('immersive').onclick=()=>{document.body.classList.toggle('immersive');resize()};$('stage').onclick=()=>{if(document.body.classList.contains('immersive')){document.body.classList.remove('immersive');resize()}};
+window.addEventListener('keydown',e=>{if(e.target.matches('input,select'))return;if(e.code==='Space'){e.preventDefault();$('play').click()}if(e.code==='ArrowLeft')seek(clock()-.25);if(e.code==='ArrowRight')seek(clock()+.25);if(e.code==='Escape'){document.body.classList.remove('immersive');resize()}});
+function resize(){let box=$('stage').getBoundingClientRect(),w=Math.min(box.width,box.height*16/9);canvas.style.width=w+'px';canvas.style.height=w*9/16+'px'}window.addEventListener('resize',resize);
+function makeAtlas(w,h){const cw=14,ch=22;atlas=document.createElement('canvas');atlas.width=95*cw;atlas.height=palette.length*ch;let a=atlas.getContext('2d',{alpha:false});a.fillStyle='#030806';a.fillRect(0,0,atlas.width,atlas.height);a.font='18px Menlo,Consolas,monospace';a.textAlign='center';a.textBaseline='middle';for(let c=0;c<4;c++){a.fillStyle=palette[c];for(let i=0;i<95;i++)a.fillText(String.fromCharCode(32+i),i*cw+cw/2,c*ch+ch/2)}if($('crt').checked){a.fillStyle='rgba(0,0,0,.13)';for(let y=1;y<atlas.height;y+=4)a.fillRect(0,y,atlas.width,1)}activeGrid=w+','+h;canvas.width=w*cw;canvas.height=h*ch;previous=null;previousCRT=$('crt').checked;ctx.imageSmoothingEnabled=false}
+function paint(t,opts={}){let [w,h]=$('grid').value.split(',').map(Number);if(!atlas||activeGrid!==w+','+h||previousCRT!==$('crt').checked)makeAtlas(w,h);let g=Seed.render(t,w,h,opts);for(let i=0;i<g.ch.length;i++){if(previous&&previous.ch[i]===g.ch[i]&&previous.col[i]===g.col[i])continue;let c=g.ch[i].charCodeAt(0)-32;if(c<0||c>94)c=0;ctx.drawImage(atlas,c*14,g.col[i]*22,14,22,(i%w)*14,Math.floor(i/w)*22,14,22)}previous=g;
+ canvas.dataset.scene=Seed.scene(t);canvas.dataset.time=t.toFixed(3);$('seek').value=t;$('time').textContent=t.toFixed(3)+' / 21.600';return g}
+function loop(now){if(now-last>=1000/+$('fps').value-1){last=now-((now-last)%(1000/+$('fps').value));let t=clock();if(t>=Seed.END&&(running||!audio.paused)){stop();if(!silent&&audio.src)audio.currentTime=Seed.END}let key=t.toFixed(4)+'/'+$('grid').value;if(key!==lastKey){paint(t);lastKey=key;frameCount++}if(now-frameStart>1000){measuredFPS=frameCount;frameCount=0;frameStart=now}analysis.sample()}requestAnimationFrame(loop)}
+// Read-only capture/control API also makes deterministic scene inspection reproducible.
+window.Pilot={paint,seek,clock,get fps(){return measuredFPS},get analysis(){return analysis}};
+resize();paint(Seed.START);requestAnimationFrame(loop);
+
+</script></body></html>
