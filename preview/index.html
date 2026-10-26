@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark" />
+    <title>SEED / 原创 ASCII MV</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>SEED / A COMPUTATIONAL SHORT</strong
+        ><small>30 秒原创 ASCII MV · 五幕预览</small>
+      </div>
+      <a href="docs/README.html">使用说明 ↗</a>
+    </header>
+    <main>
+      <section id="stage" aria-label="ASCII 动画">
+        <canvas id="screen" aria-label="SEED 五幕原创程序动画"></canvas
+        ><output id="debug" hidden></output
+        ><button id="showControls" hidden>显示控制</button>
+      </section>
+      <section class="controls">
+        <div class="row">
+          <label class="file"
+            >加载本地音频<input id="file" type="file" accept="audio/*" /></label
+          ><button id="demo">原创测试音轨</button
+          ><span id="status" role="status"
+            >加载音频后点击播放 · 音频仅在本机处理</span
+          >
+        </div>
+        <div class="row transport">
+          <button id="restart" aria-label="从头开始">↺</button
+          ><button id="back">−5 秒</button><button id="play">播放</button
+          ><button id="forward">+5 秒</button
+          ><output id="time">00:00 / 00:30</output
+          ><input
+            id="seek"
+            aria-label="进度"
+            type="range"
+            min="0"
+            max="30"
+            value="0"
+            step="0.01"
+          /><button id="hideControls">沉浸模式</button>
+        </div>
+        <details>
+          <summary>设置 / 场景与画质</summary>
+          <div class="row">
+            <label
+              >场景
+              <select id="chapter">
+                <option value="0">01 · SYSTEM BOOT</option>
+                <option value="5">02 · MATHEMATICAL CREATION</option>
+                <option value="11">03 · DATA DIMENSION</option>
+                <option value="18">04 · EMERGENT LIFE</option>
+                <option value="25">05 · CONSCIOUSNESS</option>
+              </select></label
+            ><label
+              >字符网格
+              <select id="grid">
+                <option value="100,36">100 × 36 · 标准</option>
+                <option value="128,44">128 × 44 · 精细</option>
+                <option value="80,30">80 × 30 · 性能</option>
+              </select></label
+            ><label
+              >帧率
+              <select id="quality">
+                <option value="30">30 FPS</option>
+                <option value="24">24 FPS</option>
+              </select></label
+            ><label
+              >动画偏移 / 秒
+              <input
+                id="offset"
+                type="number"
+                min="-30"
+                max="30"
+                step="0.05"
+                value="0" /></label
+            ><label
+              ><input id="reactive" type="checkbox" checked />音频响应</label
+            ><label><input id="debugToggle" type="checkbox" />场景与 FPS</label
+            ><button id="fullscreen">全屏</button>
+          </div>
+          <p>
+            固定 30 秒预览。正偏移使动画提前；FFT
+            驱动几何形变、字符密度与运动，并不等于人工校准节拍。无第三方音乐或歌词。
+          </p>
+        </details>
+      </section>
+    </main>
+    <audio id="audio" preload="metadata" playsinline></audio>
+    <script src="core.js"></script>
+    <script src="geometry.js"></script>
+    <script src="scenes.js"></script>
+    <script src="director.js"></script>
+    <script src="audio-analysis.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

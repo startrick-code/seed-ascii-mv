@@ -1,0 +1,3344 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark" />
+    <title>SEED / 原创 ASCII MV</title>
+    <style>* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #0b0c0d;
+  color: #e3d9c7;
+  font:
+    15px system-ui,
+    -apple-system,
+    sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 22px;
+  border-bottom: 1px solid #333;
+}
+strong {
+  letter-spacing: 0.14em;
+  color: #ffd787;
+}
+small {
+  display: block;
+  margin-top: 5px;
+  color: #a9a49a;
+}
+a {
+  color: #bcb6a8;
+}
+main {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 76px);
+  height: calc(100dvh - 76px);
+  min-height: 430px;
+}
+#stage {
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #080909;
+  overflow: hidden;
+}
+canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.controls {
+  padding: 10px 20px 12px;
+  border-top: 1px solid #333;
+  background: #141617;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+button,
+select,
+input[type="number"],
+.file {
+  font: inherit;
+  min-height: 44px;
+  border: 1px solid #4a463e;
+  border-radius: 7px;
+  background: #232525;
+  color: #eee3d1;
+  padding: 8px 12px;
+}
+button,
+.file {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:active {
+  background: #514737;
+}
+button:disabled {
+  opacity: 0.4;
+}
+#play {
+  min-width: 90px;
+  background: #e7bd72;
+  color: #141414;
+}
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.file input {
+  width: 1px;
+  height: 1px;
+  position: absolute;
+  opacity: 0;
+}
+.file:focus-within {
+  outline: 2px solid #ffd787;
+}
+input[type="range"] {
+  flex: 1;
+  min-width: 140px;
+  min-height: 44px;
+  accent-color: #e7bd72;
+  touch-action: pan-y;
+}
+input[type="number"] {
+  width: 95px;
+}
+output {
+  font-variant-numeric: tabular-nums;
+}
+#status,
+p {
+  font-size: 12px;
+  color: #b6b1a6;
+}
+p {
+  margin: 8px 0 0;
+}
+body:fullscreen main {
+  height: calc(100dvh - 76px);
+}
+@media (max-width: 700px) {
+  header {
+    padding: 10px;
+  }
+  header a {
+    font-size: 12px;
+  }
+  .controls {
+    padding: 6px 10px;
+  }
+  .row {
+    gap: 6px;
+  }
+  #status {
+    flex-basis: 100%;
+  }
+  main {
+    height: auto;
+    min-height: calc(100dvh - 76px);
+  }
+  #stage {
+    min-height: 45vh;
+  }
+  label {
+    font-size: 12px;
+  }
+}
+#stage {
+  position: relative;
+  background: #000;
+}
+canvas {
+  background: #000;
+}
+.transport {
+  flex-wrap: nowrap;
+}
+#seek {
+  min-width: 60px;
+}
+details {
+  border-top: 1px solid #34382f;
+  padding-top: 7px;
+}
+summary {
+  min-height: 35px;
+  padding: 6px;
+  cursor: pointer;
+  color: #a5b798;
+}
+input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: #b5d18d;
+}
+#debug {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  background: #000b;
+  font: 12px monospace;
+  color: #8aaa98;
+  pointer-events: none;
+}
+#showControls {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  opacity: 0.65;
+}
+body.immersive header,
+body.immersive .controls {
+  display: none;
+}
+body.immersive main {
+  height: 100dvh;
+  min-height: 0;
+}
+body.immersive #stage {
+  min-height: 0;
+}
+#showControls[hidden],
+#debug[hidden] {
+  display: none;
+}
+header strong {
+  font-size: 13px;
+}
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #b0d297;
+}
+@media (max-width: 700px) {
+  .transport {
+    flex-wrap: wrap;
+  }
+  #seek {
+    flex-basis: 100%;
+  }
+  #hideControls {
+    font-size: 12px;
+  }
+  header strong {
+    font-size: 11px;
+  }
+}
+</style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>SEED / A COMPUTATIONAL SHORT</strong
+        ><small>30 秒原创 ASCII MV · 五幕预览</small>
+      </div>
+      <a href="docs/README.html">使用说明 ↗</a>
+    </header>
+    <main>
+      <section id="stage" aria-label="ASCII 动画">
+        <canvas id="screen" aria-label="SEED 五幕原创程序动画"></canvas
+        ><output id="debug" hidden></output
+        ><button id="showControls" hidden>显示控制</button>
+      </section>
+      <section class="controls">
+        <div class="row">
+          <label class="file"
+            >加载本地音频<input id="file" type="file" accept="audio/*" /></label
+          ><button id="demo">原创测试音轨</button
+          ><span id="status" role="status"
+            >加载音频后点击播放 · 音频仅在本机处理</span
+          >
+        </div>
+        <div class="row transport">
+          <button id="restart" aria-label="从头开始">↺</button
+          ><button id="back">−5 秒</button><button id="play">播放</button
+          ><button id="forward">+5 秒</button
+          ><output id="time">00:00 / 00:30</output
+          ><input
+            id="seek"
+            aria-label="进度"
+            type="range"
+            min="0"
+            max="30"
+            value="0"
+            step="0.01"
+          /><button id="hideControls">沉浸模式</button>
+        </div>
+        <details>
+          <summary>设置 / 场景与画质</summary>
+          <div class="row">
+            <label
+              >场景
+              <select id="chapter">
+                <option value="0">01 · SYSTEM BOOT</option>
+                <option value="5">02 · MATHEMATICAL CREATION</option>
+                <option value="11">03 · DATA DIMENSION</option>
+                <option value="18">04 · EMERGENT LIFE</option>
+                <option value="25">05 · CONSCIOUSNESS</option>
+              </select></label
+            ><label
+              >字符网格
+              <select id="grid">
+                <option value="100,36">100 × 36 · 标准</option>
+                <option value="128,44">128 × 44 · 精细</option>
+                <option value="80,30">80 × 30 · 性能</option>
+              </select></label
+            ><label
+              >帧率
+              <select id="quality">
+                <option value="30">30 FPS</option>
+                <option value="24">24 FPS</option>
+              </select></label
+            ><label
+              >动画偏移 / 秒
+              <input
+                id="offset"
+                type="number"
+                min="-30"
+                max="30"
+                step="0.05"
+                value="0" /></label
+            ><label
+              ><input id="reactive" type="checkbox" checked />音频响应</label
+            ><label><input id="debugToggle" type="checkbox" />场景与 FPS</label
+            ><button id="fullscreen">全屏</button>
+          </div>
+          <p>
+            固定 30 秒预览。正偏移使动画提前；FFT
+            驱动几何形变、字符密度与运动，并不等于人工校准节拍。无第三方音乐或歌词。
+          </p>
+        </details>
+      </section>
+    </main>
+    <audio id="audio" preload="metadata" playsinline></audio>
+    <script>/* Independent original framework. No upstream implementation or assets. */
+(function (root) {
+  "use strict";
+  const duration = 30;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  function timeline(t, offset) {
+    return clamp(t + offset, 0, duration);
+  }
+  function cellWidth(c) {
+    const n = c.codePointAt(0);
+    if (/\p{Mark}/u.test(c) || n === 0x200d || n === 0xfe0f) return 0;
+    return n >= 0x1100 &&
+      (n <= 0x115f ||
+        n === 0x2329 ||
+        n === 0x232a ||
+        (n >= 0x2e80 && n <= 0xa4cf) ||
+        (n >= 0xac00 && n <= 0xd7a3) ||
+        (n >= 0xf900 && n <= 0xfaff) ||
+        (n >= 0xfe10 && n <= 0xfe6f) ||
+        (n >= 0xff01 && n <= 0xff60) ||
+        (n >= 0xffe0 && n <= 0xffe6) ||
+        n >= 0x1f300)
+      ? 2
+      : 1;
+  }
+  class Grid {
+    constructor(w, h) {
+      this.w = w;
+      this.h = h;
+      this.cells = Array.from({ length: h }, () =>
+        Array.from({ length: w }, () => [" ", 0]),
+      );
+    }
+    put(x, y, s, color = 1) {
+      x = Math.floor(x);
+      y = Math.floor(y);
+      if (y < 0 || y >= this.h) return;
+      for (const ch of String(s)) {
+        const k = cellWidth(ch);
+        if (!k) continue;
+        if (x >= 0 && x + k <= this.w) {
+          for (let j = x; j < x + k; j++) {
+            if (this.cells[y][j][0] === "" && j > 0)
+              this.cells[y][j - 1] = [" ", 0];
+            if (cellWidth(this.cells[y][j][0] || " ") === 2 && j + 1 < this.w)
+              this.cells[y][j + 1] = [" ", 0];
+          }
+          this.cells[y][x] = [ch, color];
+          if (k === 2) this.cells[y][x + 1] = ["", color];
+        }
+        x += k;
+      }
+    }
+    center(y, s, color = 1) {
+      this.put(
+        Math.floor((this.w - [...s].reduce((a, c) => a + cellWidth(c), 0)) / 2),
+        y,
+        s,
+        color,
+      );
+    }
+  }
+  const api = { duration, clamp, timeline, cellWidth, Grid };
+  root.ASCII = api;
+  if (typeof module !== "undefined") module.exports = api;
+})(globalThis);
+</script>
+    <script>(function (R) {
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v)),
+    mix = (a, b, u) => a + (b - a) * u;
+  const smooth = (a, b, t) => {
+    const u = clamp((t - a) / (b - a));
+    return u * u * (3 - 2 * u);
+  };
+  const hash = (n) => {
+    const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  function rotate(x, y, z, a, b) {
+    let X = x * Math.cos(a) - z * Math.sin(a),
+      Z = x * Math.sin(a) + z * Math.cos(a);
+    return [
+      X,
+      y * Math.cos(b) - Z * Math.sin(b),
+      y * Math.sin(b) + Z * Math.cos(b),
+    ];
+  }
+  function project(x, y, z) {
+    const d = 3.8 / (3.8 + z);
+    return [x * d, y * d, d];
+  }
+  function point(g, x, y, ch = ".", c = 1, alpha = 1) {
+    const X = Math.round((0.5 + x * 0.5) * g.w),
+      Y = Math.round((0.5 + y * 0.5) * g.h);
+    g.put(X, Y, ch, c);
+    if (X >= 0 && X < g.w && Y >= 0 && Y < g.h) g.cells[Y][X][2] = clamp(alpha);
+  }
+  function line(g, x, y, X, Y, ch = ".", c = 1, alpha = 1) {
+    const n = Math.ceil(Math.max(Math.abs(X - x) * g.w, Math.abs(Y - y) * g.h));
+    for (let i = 0; i <= n; i++) {
+      const u = n ? i / n : 0;
+      point(g, mix(x, X, u), mix(y, Y, u), ch, c, alpha);
+    }
+  }
+  R.Geo = { clamp, mix, smooth, hash, rotate, project, point, line };
+})(globalThis);
+</script>
+    <script>(function (R) {
+  const { mix, smooth, hash, point: basePoint, line: baseLine, rotate, project } = Geo;
+  const grid = (w, h) => new ASCII.Grid(w, h);
+  function P(g,x,y,ch='.',color=1,alpha=1){
+    const f=g.music||{},t=g.time||0,b=f.bass||0,m=f.mid||0,hi=f.high||0,e=f.event||0;
+    const scale=1+b*.16+e*.12,twist=m*.20*Math.sin(t*1.7+Math.hypot(x,y)*6);
+    const X=x*Math.cos(twist)-y*Math.sin(twist),Y=x*Math.sin(twist)+y*Math.cos(twist);
+    x=X*scale+Math.sin(y*8+t*3)*hi*.035;
+    y=Y*scale+Math.sin(x*6-t*2.2)*m*.055;
+    basePoint(g,x,y,ch,color,alpha);
+  }
+  function L(g,x,y,X,Y,ch='.',c=1,alpha=1){
+    const n=Math.min(350,Math.ceil(Math.max(Math.abs(X-x)*g.w,Math.abs(Y-y)*g.h)));
+    for(let i=0;i<=n;i++){const u=n?i/n:0;P(g,mix(x,X,u),mix(y,Y,u),ch,c,alpha);}
+  }
+  function musicGrid(w,h,f,t){const g=grid(w,h);g.music=f;g.time=t;return g;}
+  function ring(g, t, r = 0.2, alpha = 1) {
+    for (let i = 0; i < 110; i++) {
+      const a = (i / 110) * Math.PI * 2;
+      P(
+        g,
+        Math.cos(a) * r,
+        Math.sin(a) * r * 1.6,
+        "+*"[i % 2],
+        i % 4 === 0 ? 3 : 1,
+        alpha,
+      );
+    }
+  }
+  function boot(t, w, h, f, p) {
+    const g = musicGrid(w, h, f, t),
+      u = smooth(1.3, 4.6, t);
+    const commands = [
+      "> wake /seed:0x17",
+      "> allocate possibility",
+      "> bind space :: time",
+      "> core online",
+    ];
+    commands.forEach((s, i) => {
+      const n = Math.max(0, Math.floor((t - 0.4 - i * 0.65) * 26));
+      if (n) g.put(5, 3 + i, s.slice(0, n), i === 3 ? 1 : 2);
+    });
+    if (t < 1.8 && Math.floor(Math.max(0, t) * 4) % 2 === 0)
+      g.center(Math.floor(h * 0.52), "_", 3);
+    for (let i = 0; i < Math.floor(p.particles*(.15+.85*smooth(2.5,4.9,t))); i++) {
+      const a = hash(i) * Math.PI * 2 + t * 0.14,
+        r = mix(0.8 + hash(i + 400) * 0.5, 0.06 + hash(i + 800) * 0.13, u);
+      P(
+        g,
+        Math.cos(a) * r,
+        Math.sin(a) * r * 1.6,
+        "01:+*"[i % 5],
+        i % 6 === 0 ? 3 : 2,
+        0.25 + 0.7 * u,
+      );
+    }
+    ring(g, t, 0.12 + 0.012 * Math.sin(t * 4), smooth(2.8, 4, t));
+    if (t > 3) g.center(Math.floor(h * 0.53), "[ * ]", 3);
+    return g;
+  }
+  function creation(t, w, h, f) {
+    const g = musicGrid(w, h, f, t),
+      u = smooth(-0.6, 2, t),
+      rot = smooth(2, 5, t) * 0.45;
+    ring(g, t, 0.12 * (1 - u), 1 - u);
+    L(g, -0.82, 0, 0.82, 0, ".", 0, u);
+    L(g, 0, -0.75, 0, 0.75, ":", 0, u);
+    for (let k = 0; k < 3; k++)
+      for (let i = 0; i < 270; i++) {
+        const x = (i / 269) * 1.64 - 0.82,
+          a = x * 5 + t * 0.9 + k * 2.094;
+        const y = Math.sin(a + (f.mid||0)*Math.sin(x*9+t)*.7) * (0.20 + 0.05 * k + (f.bass||0)*.13);
+        const xx = x * Math.cos(rot) - y * Math.sin(rot),
+          yy = x * Math.sin(rot) + y * Math.cos(rot);
+        const start = hash(i + k * 270) * Math.PI * 2;
+        P(
+          g,
+          mix(Math.cos(start) * 0.12, xx, u),
+          mix(Math.sin(start) * 0.19, yy, u),
+          " .:-=+*"[2 + k],
+          k === 0 ? 1 : k === 1 ? 2 : 3,
+          0.65 + 0.2 * Math.sin(i * 0.1 + t),
+        );
+      }
+    for (let j = 0; j < 3; j++) {
+      const r = 0.22 + j * 0.14;
+      for (let i = 0; i < 90; i++) {
+        const a = (i / 90) * Math.PI * 2 + t * 0.4;
+        P(
+          g,
+          Math.cos(a) * r,
+          Math.sin(a * 2 + t * 0.2) * r,
+          "·".replace("·", "."),
+          j === 1 ? 3 : 0,
+          smooth(2, 4, t) * 0.7,
+        );
+      }
+    }
+    for(let k=0;k<2+Math.floor((f.high||0)*3);k++)for(let i=0;i<100;i++){
+      const a=i/100*Math.PI*2,r=.27+k*.07;
+      P(g,Math.cos(a*3+t*.25)*r*1.35,Math.sin(a*2-t*.3)*r,':',k%2?3:1,.35);
+    }
+    g.put(4, h - 4, "f(x) -> space", 2);
+    return g;
+  }
+  function dimension(t, w, h, f, p) {
+    const g = musicGrid(w, h, f, t),
+      enter = smooth(-0.8, 1.5, t),
+      roll = 0.12 * Math.sin(t * 0.4),
+      speed = t * 0.48 + Math.sin(t*2.4)*(f.bass||0)*.18;
+    for (let j = p.frames - 1; j >= 0; j--) {
+      let z = (((j * 0.58 - speed) % 9.28) + 9.28) % 9.28;
+      const depth = 0.8 + z,
+        scale = (1.6 + (f.bass||0)*.22) / depth;
+      const cx = 0.16 * Math.sin(z * 0.5 + t * 0.25),
+        cy = 0.11 * Math.cos(z * 0.7 + t * 0.3);
+      const corners = [
+        [-1, -0.66],
+        [1, -0.66],
+        [1, 0.66],
+        [-1, 0.66],
+      ].map(([x, y]) => {
+        const X = x * Math.cos(roll) - y * Math.sin(roll),
+          Y = x * Math.sin(roll) + y * Math.cos(roll);
+        return [X * scale + cx, Y * scale + cy];
+      });
+      const alpha =
+        Math.min(1, 2 / depth) * enter * (0.88 + Math.min(0.12, f.rms * 0.3));
+      for (let k = 0; k < 4; k++) {
+        const a = corners[k],
+          b = corners[(k + 1) % 4];
+        L(
+          g,
+          ...a,
+          ...b,
+          j % 3 === 0 ? "+" : ".",
+          j % 4 === 0 ? 3 : j % 2 ? 2 : 1,
+          alpha,
+        );
+        if (j < 10) {
+          const z2 = depth + 0.58,
+            s2 = 1.6 / z2;
+          L(
+            g,
+            ...a,
+            (corners[k][0] * s2) / scale,
+            (corners[k][1] * s2) / scale,
+            ":",
+            0,
+            alpha * 0.5,
+          );
+        }
+      }
+      for (let k = 0; k < 6 + Math.floor((f.high||0)*10); k++)
+        P(
+          g,
+          ((k / (5+Math.floor((f.high||0)*10))) * 2 - 1) * scale + cx,
+          -0.66 * scale + cy,
+          String((j + k) % 10),
+          2,
+          alpha,
+        );
+    }
+    g.put(4, h - 4, "z / unbounded", 3);
+    return g;
+  }
+  function lifePosition(i, t) {
+    const a = (i / 84) * Math.PI * 2,
+      grow = smooth(0, 5.5, t),
+      r = 0.48 + 0.1 * Math.cos(a * 5 - t * 0.35);
+    const nx = Math.cos(a) * r,
+      ny = Math.sin(a) * r * 1.05;
+    const q = rotate(
+      Math.cos(a) * 0.65,
+      Math.sin(a) * 0.48,
+      Math.sin(a * 3) * 0.32,
+      t * 0.08,
+      0.3,
+    );
+    return [mix(q[0], nx, grow), mix(q[1], ny, grow)];
+  }
+  function life(t, w, h, f, p) {
+    const g = musicGrid(w, h, f, t),
+      positions = Array.from({ length: p.nodes }, (_, i) => lifePosition(i, t));
+    for (let i = 0; i < p.nodes; i++) {
+      const a = positions[i];
+      for (const step of ((f.mid||0)>.45?[1,7,13,21]:[1,7,21])) {
+        const j = (i + step) % p.nodes,
+          b = positions[j],
+          wave = (t * 0.8 - i / p.nodes + 3) % 1;
+        L(
+          g,
+          ...a,
+          ...b,
+          step === 1 ? ":" : ".",
+          wave < 0.09 ? 3 : step === 1 ? 2 : 0,
+          step === 1 ? 0.8 : 0.22 + 0.15 * smooth(0, 4, t),
+        );
+      }
+    }
+    for (let i = 0; i < p.nodes; i++) {
+      const a = positions[i],
+        pulse = (t * 0.8 - i / p.nodes + 3) % 1;
+      P(
+        g,
+        ...a,
+        pulse < 0.1 ? "@" : "o",
+        pulse < 0.1 ? 3 : 2,
+        0.6 + 0.4 * Math.cos(i * 0.15 - t),
+      );
+    }
+    // A growing fivefold seed / branching filament, not a figurative copied asset.
+    for (let k = 0; k < 5; k++) {
+      const angle = k * Math.PI * 0.4 + t * 0.07;
+      for (let i = 0; i < 50; i++) {
+        const r = (i / 50) * 0.44 * smooth(2, 5, t),
+          a = angle + r * 3;
+        P(g, Math.cos(a) * r, Math.sin(a) * r, "+*"[i % 2], 1, 0.85);
+      }
+    }
+    ring(g, t, 0.07 + 0.012 * Math.sin(t * 3), smooth(3, 5, t));
+    g.put(4, h - 4, "signal / becomes self", 2);
+    return g;
+  }
+  function consciousness(t, w, h, f, p) {
+    const g = musicGrid(w, h, f, t),
+      u = smooth(0.2, 2.6, t),
+      fade = 1 - smooth(4.25, 5, t);
+    for (let i = 0; i < p.fragments; i++) {
+      const a = (i / p.fragments) * Math.PI * 2,
+        r = 0.5 + 0.08 * Math.cos(a * 5),
+        targetX = ((i % 15) - 7) * 0.018;
+      const x = mix(Math.cos(a) * r, targetX, u),
+        y = mix(Math.sin(a) * r, 0, u);
+      const glitch =
+        t < 1.6 && hash(Math.floor(t * 12) + Math.floor(i / 12)) > 0.72;
+      P(
+        g,
+        x + (glitch ? 0.09 : 0),
+        y,
+        "01/+=*"[i % 6],
+        i % 3 === 0 ? 3 : 2,
+        (1 - u) * fade,
+      );
+    }
+    const text = "AWAITING INPUT",
+      reveal = smooth(1.7, 3.1, t);
+    const n = Math.floor(text.length * reveal);
+    g.center(
+      Math.floor(h * 0.5),
+      text.slice(0, n) + (Math.floor(t * 2) % 2 === 0 ? "_" : " "),
+      1,
+    );
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        g.cells[y][x][2] = (g.cells[y][x][2] ?? 1) * fade;
+      }
+    if (t < 2)
+      for (let i = 0; i < 4; i++) {
+        const y = Math.floor(hash(i + Math.floor(t * 10)) * h);
+        if (hash(i + t) > 0.6)
+          g.put(Math.floor(w * 0.2), y, "--:: / REASSEMBLE / ::--", 0);
+      }
+    return g;
+  }
+  R.Scenes = { boot, creation, dimension, life, consciousness };
+})(globalThis);
+</script>
+    <script>(function(R){
+  const timeline=[];let data=null,profileEnabled=false;
+  const ready=Promise.resolve(configure({
+  "schema": 1,
+  "duration": 214.360816,
+  "previewDuration": 30,
+  "audioSHA256": "46fc8657336c739b293adab9d366c968a2879f373413714951924190f3ff9513",
+  "method": {
+    "sampleRate": 22050,
+    "window": 2048,
+    "hop": 220,
+    "profileStep": 0.1,
+    "columns": [
+      "rms",
+      "bass35_220",
+      "mid220_2200",
+      "high2200_9000"
+    ],
+    "normalization": "each feature / first-30s 95th percentile, clipped 0..1",
+    "warning": "Spectral-flux peaks are onset candidates, NOT annotated beats. No perceptual beat annotation performed."
+  },
+  "onsetCandidates": [
+    {
+      "time": 5.887,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 6.475,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 6.934,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 7.403,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 7.643,
+      "strength": 0.387,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 7.862,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 8.321,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 8.561,
+      "strength": 0.477,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 8.79,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 9.239,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 9.698,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 10.167,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 10.636,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 10.865,
+      "strength": 0.644,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 11.095,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 11.544,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 11.783,
+      "strength": 0.659,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 12.013,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 12.232,
+      "strength": 0.59,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 12.472,
+      "strength": 0.888,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 12.931,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 13.4,
+      "strength": 0.751,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 13.859,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 14.317,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 14.786,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 15.006,
+      "strength": 0.539,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 15.245,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 15.694,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 15.914,
+      "strength": 0.858,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 16.163,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 16.622,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 16.991,
+      "strength": 0.952,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 17.311,
+      "strength": 0.914,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 17.54,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 17.999,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 18.468,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 18.688,
+      "strength": 0.616,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 18.937,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 19.166,
+      "strength": 0.59,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 19.396,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 19.715,
+      "strength": 0.88,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 20.334,
+      "strength": 0.497,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 20.773,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 21.232,
+      "strength": 0.771,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 21.501,
+      "strength": 0.859,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 21.96,
+      "strength": 0.873,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 22.419,
+      "strength": 0.782,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 22.878,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 23.098,
+      "strength": 0.899,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 23.337,
+      "strength": 0.856,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 23.806,
+      "strength": 0.821,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 24.255,
+      "strength": 0.649,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 24.734,
+      "strength": 0.89,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 25.213,
+      "strength": 0.69,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 25.662,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 26.111,
+      "strength": 0.803,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 26.779,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 27.029,
+      "strength": 0.839,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 27.348,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 27.687,
+      "strength": 0.832,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 27.937,
+      "strength": 0.706,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 28.625,
+      "strength": 0.741,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 28.874,
+      "strength": 0.783,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 29.333,
+      "strength": 1.0,
+      "kind": "spectral-flux-candidate"
+    },
+    {
+      "time": 29.792,
+      "strength": 0.756,
+      "kind": "spectral-flux-candidate"
+    }
+  ],
+  "profile": [
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.107,
+      0.001,
+      0.048,
+      0.51
+    ],
+    [
+      0.285,
+      0.015,
+      0.158,
+      0.51
+    ],
+    [
+      0.87,
+      0.423,
+      0.425,
+      0.253
+    ],
+    [
+      0.36,
+      0.274,
+      0.559,
+      0.35
+    ],
+    [
+      0.405,
+      0.368,
+      0.105,
+      0.135
+    ],
+    [
+      0.373,
+      0.319,
+      0.229,
+      0.421
+    ],
+    [
+      0.955,
+      0.973,
+      0.543,
+      0.529
+    ],
+    [
+      0.418,
+      0.299,
+      0.612,
+      0.102
+    ],
+    [
+      0.481,
+      0.456,
+      0.575,
+      0.176
+    ],
+    [
+      0.4,
+      0.322,
+      0.229,
+      0.194
+    ],
+    [
+      0.431,
+      0.391,
+      0.22,
+      0.115
+    ],
+    [
+      1.0,
+      0.637,
+      0.521,
+      0.288
+    ],
+    [
+      0.398,
+      0.325,
+      0.58,
+      0.161
+    ],
+    [
+      0.423,
+      0.351,
+      0.575,
+      0.148
+    ],
+    [
+      0.316,
+      0.2,
+      0.431,
+      0.168
+    ],
+    [
+      0.869,
+      0.274,
+      0.597,
+      0.343
+    ],
+    [
+      0.36,
+      0.313,
+      0.391,
+      0.244
+    ],
+    [
+      0.359,
+      0.319,
+      0.365,
+      0.115
+    ],
+    [
+      0.398,
+      0.274,
+      0.552,
+      0.181
+    ],
+    [
+      0.455,
+      0.323,
+      0.666,
+      0.18
+    ],
+    [
+      0.961,
+      1.0,
+      0.673,
+      0.433
+    ],
+    [
+      0.371,
+      0.283,
+      0.513,
+      0.126
+    ],
+    [
+      0.421,
+      0.333,
+      0.382,
+      0.098
+    ],
+    [
+      0.452,
+      0.371,
+      0.437,
+      0.114
+    ],
+    [
+      0.565,
+      0.42,
+      0.177,
+      0.157
+    ],
+    [
+      0.758,
+      0.393,
+      0.458,
+      0.212
+    ],
+    [
+      0.37,
+      0.359,
+      0.14,
+      0.095
+    ],
+    [
+      0.426,
+      0.293,
+      0.658,
+      0.198
+    ],
+    [
+      0.421,
+      0.322,
+      0.586,
+      0.209
+    ],
+    [
+      0.973,
+      0.903,
+      0.499,
+      0.496
+    ],
+    [
+      0.457,
+      0.354,
+      0.55,
+      0.17
+    ],
+    [
+      0.427,
+      0.333,
+      0.533,
+      0.332
+    ],
+    [
+      0.356,
+      0.32,
+      0.304,
+      0.138
+    ],
+    [
+      0.273,
+      0.227,
+      0.216,
+      0.176
+    ],
+    [
+      0.957,
+      0.911,
+      0.366,
+      0.321
+    ],
+    [
+      0.407,
+      0.305,
+      0.227,
+      0.352
+    ],
+    [
+      0.418,
+      0.401,
+      0.311,
+      0.339
+    ],
+    [
+      0.368,
+      0.322,
+      0.248,
+      0.205
+    ],
+    [
+      0.81,
+      0.388,
+      0.299,
+      0.215
+    ],
+    [
+      0.558,
+      0.399,
+      0.494,
+      0.24
+    ],
+    [
+      0.417,
+      0.309,
+      0.602,
+      0.337
+    ],
+    [
+      0.411,
+      0.368,
+      0.168,
+      0.138
+    ],
+    [
+      0.439,
+      0.389,
+      0.213,
+      0.147
+    ],
+    [
+      1.0,
+      1.0,
+      0.612,
+      0.514
+    ],
+    [
+      0.43,
+      0.307,
+      0.535,
+      0.193
+    ],
+    [
+      0.447,
+      0.345,
+      0.562,
+      0.203
+    ],
+    [
+      0.401,
+      0.303,
+      0.481,
+      0.294
+    ],
+    [
+      0.372,
+      0.339,
+      0.147,
+      0.154
+    ],
+    [
+      1.0,
+      0.757,
+      0.536,
+      0.316
+    ],
+    [
+      0.402,
+      0.283,
+      0.538,
+      0.325
+    ],
+    [
+      0.366,
+      0.293,
+      0.216,
+      0.412
+    ],
+    [
+      0.32,
+      0.21,
+      0.306,
+      0.45
+    ],
+    [
+      0.971,
+      0.789,
+      0.592,
+      0.493
+    ],
+    [
+      0.424,
+      0.339,
+      0.126,
+      0.334
+    ],
+    [
+      0.413,
+      0.378,
+      0.211,
+      0.295
+    ],
+    [
+      0.418,
+      0.306,
+      0.526,
+      0.297
+    ],
+    [
+      0.417,
+      0.303,
+      0.668,
+      0.134
+    ],
+    [
+      0.981,
+      0.822,
+      0.52,
+      0.243
+    ],
+    [
+      0.315,
+      0.293,
+      0.233,
+      0.325
+    ],
+    [
+      0.368,
+      0.239,
+      0.47,
+      0.353
+    ],
+    [
+      0.491,
+      0.395,
+      0.547,
+      0.306
+    ],
+    [
+      0.837,
+      0.353,
+      0.206,
+      0.236
+    ],
+    [
+      0.568,
+      0.344,
+      0.474,
+      0.254
+    ],
+    [
+      0.412,
+      0.379,
+      0.549,
+      0.125
+    ],
+    [
+      0.42,
+      0.311,
+      0.554,
+      0.221
+    ],
+    [
+      0.419,
+      0.372,
+      0.153,
+      0.222
+    ],
+    [
+      0.976,
+      1.0,
+      0.63,
+      0.434
+    ],
+    [
+      0.359,
+      0.259,
+      0.18,
+      0.14
+    ],
+    [
+      0.418,
+      0.386,
+      0.382,
+      0.245
+    ],
+    [
+      0.238,
+      0.182,
+      0.323,
+      0.273
+    ],
+    [
+      0.229,
+      0.114,
+      0.469,
+      0.283
+    ],
+    [
+      0.944,
+      0.639,
+      0.366,
+      0.264
+    ],
+    [
+      0.411,
+      0.288,
+      0.224,
+      0.328
+    ],
+    [
+      0.427,
+      0.401,
+      0.35,
+      0.337
+    ],
+    [
+      0.368,
+      0.308,
+      0.401,
+      0.261
+    ],
+    [
+      0.976,
+      0.576,
+      0.379,
+      0.612
+    ],
+    [
+      0.446,
+      0.326,
+      0.477,
+      0.178
+    ],
+    [
+      0.389,
+      0.289,
+      0.494,
+      0.134
+    ],
+    [
+      0.407,
+      0.376,
+      0.146,
+      0.117
+    ],
+    [
+      0.437,
+      0.388,
+      0.146,
+      0.16
+    ],
+    [
+      1.0,
+      1.0,
+      0.618,
+      0.467
+    ],
+    [
+      0.419,
+      0.302,
+      0.544,
+      0.184
+    ],
+    [
+      0.439,
+      0.365,
+      0.594,
+      0.205
+    ],
+    [
+      0.406,
+      0.298,
+      0.581,
+      0.238
+    ],
+    [
+      0.452,
+      0.325,
+      0.362,
+      0.213
+    ],
+    [
+      0.833,
+      0.453,
+      0.421,
+      0.268
+    ],
+    [
+      0.422,
+      0.33,
+      0.465,
+      0.314
+    ],
+    [
+      0.376,
+      0.333,
+      0.274,
+      0.158
+    ],
+    [
+      0.343,
+      0.219,
+      0.714,
+      0.314
+    ],
+    [
+      0.927,
+      0.731,
+      0.665,
+      0.472
+    ],
+    [
+      0.437,
+      0.342,
+      0.181,
+      0.167
+    ],
+    [
+      0.445,
+      0.394,
+      0.275,
+      0.147
+    ],
+    [
+      0.424,
+      0.301,
+      0.514,
+      0.234
+    ],
+    [
+      0.39,
+      0.313,
+      0.517,
+      0.121
+    ],
+    [
+      0.997,
+      0.954,
+      0.559,
+      0.292
+    ],
+    [
+      0.395,
+      0.329,
+      0.553,
+      0.166
+    ],
+    [
+      0.443,
+      0.288,
+      0.696,
+      0.198
+    ],
+    [
+      0.472,
+      0.396,
+      0.424,
+      0.295
+    ],
+    [
+      0.994,
+      0.696,
+      0.384,
+      0.477
+    ],
+    [
+      0.408,
+      0.273,
+      0.506,
+      0.172
+    ],
+    [
+      0.43,
+      0.417,
+      0.418,
+      0.233
+    ],
+    [
+      0.427,
+      0.303,
+      0.612,
+      0.51
+    ],
+    [
+      0.429,
+      0.313,
+      0.589,
+      0.322
+    ],
+    [
+      1.0,
+      1.0,
+      0.58,
+      0.416
+    ],
+    [
+      0.378,
+      0.3,
+      0.238,
+      0.455
+    ],
+    [
+      0.385,
+      0.311,
+      0.269,
+      0.271
+    ],
+    [
+      0.354,
+      0.269,
+      0.442,
+      0.172
+    ],
+    [
+      0.325,
+      0.227,
+      0.223,
+      0.314
+    ],
+    [
+      0.864,
+      0.434,
+      0.323,
+      0.312
+    ],
+    [
+      0.468,
+      0.367,
+      0.314,
+      0.395
+    ],
+    [
+      0.451,
+      0.427,
+      0.51,
+      0.295
+    ],
+    [
+      0.406,
+      0.281,
+      0.33,
+      0.472
+    ],
+    [
+      0.93,
+      0.751,
+      0.565,
+      0.589
+    ],
+    [
+      0.373,
+      0.235,
+      0.469,
+      0.223
+    ],
+    [
+      0.45,
+      0.35,
+      0.194,
+      0.13
+    ],
+    [
+      0.454,
+      0.38,
+      0.125,
+      0.178
+    ],
+    [
+      0.4,
+      0.354,
+      0.198,
+      0.14
+    ],
+    [
+      1.0,
+      0.925,
+      0.542,
+      0.286
+    ],
+    [
+      0.45,
+      0.309,
+      0.579,
+      0.163
+    ],
+    [
+      0.454,
+      0.374,
+      0.2,
+      0.215
+    ],
+    [
+      0.408,
+      0.355,
+      0.377,
+      0.22
+    ],
+    [
+      0.931,
+      0.383,
+      0.505,
+      0.276
+    ],
+    [
+      0.53,
+      0.386,
+      0.528,
+      0.224
+    ],
+    [
+      0.407,
+      0.338,
+      0.534,
+      0.115
+    ],
+    [
+      0.404,
+      0.382,
+      0.393,
+      0.124
+    ],
+    [
+      0.313,
+      0.207,
+      0.599,
+      0.205
+    ],
+    [
+      0.967,
+      1.0,
+      0.664,
+      0.541
+    ],
+    [
+      0.411,
+      0.321,
+      0.521,
+      0.19
+    ],
+    [
+      0.349,
+      0.307,
+      0.293,
+      0.214
+    ],
+    [
+      0.394,
+      0.307,
+      0.544,
+      0.216
+    ],
+    [
+      0.431,
+      0.323,
+      0.667,
+      0.156
+    ],
+    [
+      1.0,
+      0.629,
+      0.49,
+      0.32
+    ],
+    [
+      0.393,
+      0.274,
+      0.146,
+      0.466
+    ],
+    [
+      0.443,
+      0.366,
+      0.531,
+      0.353
+    ],
+    [
+      0.433,
+      0.359,
+      0.484,
+      0.361
+    ],
+    [
+      0.895,
+      0.474,
+      0.414,
+      0.342
+    ],
+    [
+      0.461,
+      0.381,
+      0.481,
+      0.249
+    ],
+    [
+      0.436,
+      0.321,
+      0.592,
+      0.159
+    ],
+    [
+      0.464,
+      0.351,
+      0.618,
+      0.264
+    ],
+    [
+      0.452,
+      0.347,
+      0.546,
+      0.458
+    ],
+    [
+      0.323,
+      0.222,
+      0.474,
+      0.29
+    ],
+    [
+      0.364,
+      0.287,
+      0.52,
+      0.178
+    ],
+    [
+      0.411,
+      0.345,
+      0.452,
+      0.201
+    ],
+    [
+      0.441,
+      0.362,
+      0.418,
+      0.207
+    ],
+    [
+      0.388,
+      0.273,
+      0.481,
+      0.155
+    ],
+    [
+      0.339,
+      0.267,
+      0.431,
+      0.234
+    ],
+    [
+      0.327,
+      0.275,
+      0.285,
+      0.41
+    ],
+    [
+      0.451,
+      0.357,
+      0.408,
+      0.269
+    ],
+    [
+      0.473,
+      0.391,
+      0.429,
+      0.089
+    ],
+    [
+      1.0,
+      1.0,
+      0.854,
+      0.823
+    ],
+    [
+      0.579,
+      0.406,
+      0.907,
+      0.969
+    ],
+    [
+      0.647,
+      0.44,
+      0.865,
+      1.0
+    ],
+    [
+      0.606,
+      0.385,
+      1.0,
+      0.997
+    ],
+    [
+      0.61,
+      0.387,
+      0.973,
+      0.916
+    ],
+    [
+      0.988,
+      0.558,
+      0.657,
+      0.658
+    ],
+    [
+      0.638,
+      0.456,
+      0.962,
+      0.974
+    ],
+    [
+      0.574,
+      0.454,
+      0.751,
+      1.0
+    ],
+    [
+      0.556,
+      0.349,
+      0.861,
+      1.0
+    ],
+    [
+      1.0,
+      0.492,
+      0.927,
+      0.861
+    ],
+    [
+      0.584,
+      0.33,
+      0.814,
+      0.644
+    ],
+    [
+      0.613,
+      0.44,
+      0.718,
+      0.74
+    ],
+    [
+      0.61,
+      0.468,
+      0.649,
+      0.948
+    ],
+    [
+      0.607,
+      0.432,
+      0.923,
+      0.832
+    ],
+    [
+      1.0,
+      1.0,
+      0.999,
+      0.9
+    ],
+    [
+      0.628,
+      0.428,
+      0.847,
+      0.828
+    ],
+    [
+      0.594,
+      0.457,
+      0.988,
+      0.808
+    ],
+    [
+      0.663,
+      0.482,
+      1.0,
+      0.965
+    ],
+    [
+      0.623,
+      0.466,
+      0.794,
+      0.742
+    ],
+    [
+      1.0,
+      0.774,
+      0.672,
+      0.474
+    ],
+    [
+      0.734,
+      0.544,
+      0.733,
+      0.622
+    ],
+    [
+      0.652,
+      0.483,
+      0.828,
+      0.933
+    ],
+    [
+      0.598,
+      0.438,
+      0.831,
+      0.86
+    ],
+    [
+      1.0,
+      0.749,
+      0.856,
+      0.846
+    ],
+    [
+      0.717,
+      0.473,
+      0.775,
+      0.79
+    ],
+    [
+      0.734,
+      0.585,
+      0.847,
+      0.691
+    ],
+    [
+      0.582,
+      0.292,
+      1.0,
+      0.93
+    ],
+    [
+      0.528,
+      0.287,
+      1.0,
+      0.973
+    ],
+    [
+      1.0,
+      1.0,
+      0.774,
+      0.531
+    ],
+    [
+      0.718,
+      0.606,
+      0.959,
+      0.653
+    ],
+    [
+      0.805,
+      0.679,
+      0.822,
+      0.827
+    ],
+    [
+      0.613,
+      0.445,
+      0.712,
+      0.935
+    ],
+    [
+      0.869,
+      0.497,
+      0.742,
+      0.759
+    ],
+    [
+      0.619,
+      0.454,
+      0.881,
+      0.623
+    ],
+    [
+      0.725,
+      0.569,
+      0.942,
+      0.843
+    ],
+    [
+      0.544,
+      0.27,
+      1.0,
+      1.0
+    ],
+    [
+      0.654,
+      0.467,
+      0.891,
+      0.84
+    ],
+    [
+      1.0,
+      1.0,
+      0.705,
+      0.718
+    ],
+    [
+      0.823,
+      0.608,
+      1.0,
+      0.739
+    ],
+    [
+      0.865,
+      0.785,
+      0.902,
+      0.599
+    ],
+    [
+      0.606,
+      0.4,
+      1.0,
+      1.0
+    ],
+    [
+      0.657,
+      0.412,
+      1.0,
+      0.779
+    ],
+    [
+      0.946,
+      0.454,
+      0.653,
+      0.763
+    ],
+    [
+      0.626,
+      0.452,
+      0.989,
+      0.897
+    ],
+    [
+      0.534,
+      0.274,
+      0.915,
+      0.942
+    ],
+    [
+      0.607,
+      0.386,
+      1.0,
+      1.0
+    ],
+    [
+      1.0,
+      0.622,
+      0.818,
+      0.865
+    ],
+    [
+      0.695,
+      0.557,
+      0.746,
+      0.571
+    ],
+    [
+      0.716,
+      0.605,
+      0.739,
+      0.612
+    ],
+    [
+      0.567,
+      0.397,
+      0.836,
+      1.0
+    ],
+    [
+      0.596,
+      0.426,
+      0.839,
+      0.72
+    ],
+    [
+      1.0,
+      1.0,
+      0.816,
+      0.72
+    ],
+    [
+      0.697,
+      0.554,
+      0.809,
+      0.791
+    ],
+    [
+      0.817,
+      0.716,
+      0.7,
+      0.761
+    ],
+    [
+      0.644,
+      0.469,
+      0.935,
+      0.955
+    ],
+    [
+      0.728,
+      0.523,
+      0.69,
+      0.775
+    ],
+    [
+      0.902,
+      0.475,
+      0.922,
+      0.562
+    ],
+    [
+      0.775,
+      0.628,
+      1.0,
+      0.679
+    ],
+    [
+      0.653,
+      0.47,
+      0.907,
+      1.0
+    ],
+    [
+      0.533,
+      0.342,
+      0.786,
+      0.846
+    ],
+    [
+      0.988,
+      0.93,
+      1.0,
+      0.922
+    ],
+    [
+      0.687,
+      0.446,
+      0.851,
+      0.821
+    ],
+    [
+      0.761,
+      0.572,
+      0.949,
+      0.76
+    ],
+    [
+      0.751,
+      0.549,
+      0.926,
+      1.0
+    ],
+    [
+      0.71,
+      0.519,
+      0.857,
+      0.838
+    ],
+    [
+      1.0,
+      0.767,
+      0.785,
+      0.602
+    ],
+    [
+      0.711,
+      0.576,
+      0.963,
+      0.979
+    ],
+    [
+      0.698,
+      0.555,
+      0.903,
+      1.0
+    ],
+    [
+      0.657,
+      0.432,
+      1.0,
+      0.996
+    ],
+    [
+      0.941,
+      0.744,
+      1.0,
+      1.0
+    ],
+    [
+      0.696,
+      0.457,
+      0.856,
+      0.776
+    ],
+    [
+      0.651,
+      0.394,
+      1.0,
+      0.824
+    ],
+    [
+      0.594,
+      0.366,
+      0.998,
+      0.915
+    ],
+    [
+      0.618,
+      0.422,
+      1.0,
+      0.878
+    ],
+    [
+      1.0,
+      0.91,
+      0.662,
+      0.801
+    ],
+    [
+      0.644,
+      0.491,
+      0.708,
+      1.0
+    ],
+    [
+      0.602,
+      0.491,
+      0.76,
+      0.878
+    ],
+    [
+      0.643,
+      0.481,
+      0.827,
+      1.0
+    ],
+    [
+      0.876,
+      0.513,
+      0.911,
+      0.949
+    ],
+    [
+      0.663,
+      0.53,
+      0.772,
+      0.715
+    ],
+    [
+      0.658,
+      0.512,
+      0.817,
+      0.971
+    ],
+    [
+      0.604,
+      0.363,
+      0.861,
+      1.0
+    ],
+    [
+      0.66,
+      0.47,
+      0.983,
+      0.94
+    ],
+    [
+      1.0,
+      1.0,
+      0.892,
+      0.821
+    ],
+    [
+      0.597,
+      0.342,
+      0.955,
+      0.652
+    ],
+    [
+      0.66,
+      0.52,
+      0.966,
+      0.666
+    ],
+    [
+      0.6,
+      0.379,
+      0.968,
+      1.0
+    ],
+    [
+      0.635,
+      0.46,
+      0.948,
+      0.735
+    ],
+    [
+      0.981,
+      0.689,
+      0.792,
+      0.709
+    ],
+    [
+      0.683,
+      0.486,
+      0.852,
+      0.849
+    ],
+    [
+      0.599,
+      0.325,
+      0.891,
+      0.964
+    ],
+    [
+      0.62,
+      0.405,
+      1.0,
+      0.91
+    ],
+    [
+      0.449,
+      0.331,
+      0.797,
+      0.677
+    ]
+  ],
+  "scenes": [
+    {
+      "id": "boot",
+      "name": "SYSTEM BOOT",
+      "start": 0,
+      "end": 5.887,
+      "transition": 0.18,
+      "params": {
+        "particles": 180
+      }
+    },
+    {
+      "id": "creation",
+      "name": "MATHEMATICAL CREATION",
+      "start": 5.887,
+      "end": 12.013,
+      "transition": 0.7,
+      "params": {
+        "curves": 3
+      }
+    },
+    {
+      "id": "dimension",
+      "name": "DATA DIMENSION",
+      "start": 12.013,
+      "end": 20.773,
+      "transition": 0.5,
+      "params": {
+        "frames": 16
+      }
+    },
+    {
+      "id": "life",
+      "name": "EMERGENT LIFE",
+      "start": 20.773,
+      "end": 26.111,
+      "transition": 0.65,
+      "params": {
+        "nodes": 84
+      }
+    },
+    {
+      "id": "consciousness",
+      "name": "CONSCIOUSNESS",
+      "start": 26.111,
+      "end": 30,
+      "transition": 0,
+      "params": {
+        "fragments": 180
+      }
+    }
+  ],
+  "events": [
+    {
+      "time": 5.887,
+      "strength": 1,
+      "duration": 1.5,
+      "label": "first-entry",
+      "basis": "first strong spectral flux after silence; director-selected"
+    },
+    {
+      "time": 12.013,
+      "strength": 0.55,
+      "duration": 1,
+      "label": "space-unfold",
+      "basis": "onset candidate + editorial grouping, not annotated downbeat"
+    },
+    {
+      "time": 19.715,
+      "strength": 0.4,
+      "duration": 0.8,
+      "label": "pre-change",
+      "basis": "editorial lower-energy lead-in"
+    },
+    {
+      "time": 20.773,
+      "strength": 1,
+      "duration": 1.8,
+      "label": "energy-break",
+      "basis": "strong onset plus sustained RMS rise"
+    },
+    {
+      "time": 26.111,
+      "strength": 0.65,
+      "duration": 1,
+      "label": "closure",
+      "basis": "onset selected for sample closure, not song ending"
+    }
+  ],
+  "notes": [
+    "No audio samples or FFT bins distributed. Coarse normalized analysis only.",
+    "Onsets are candidates, not annotated musical beats."
+  ]
+}
+));
+  function configure(json){data=json;timeline.splice(0,timeline.length,...data.scenes);return data;}
+  function scene(t){return timeline.find(s=>t<s.end)||timeline[timeline.length-1];}
+  function envelope(t){if(!data||!profileEnabled)return null;const index=Geo.clamp(t/data.method.profileStep,0,data.profile.length-1),i=Math.floor(index),u=index-i;
+    const a=data.profile[i],b=data.profile[Math.min(i+1,data.profile.length-1)];return Object.fromEntries(['rms','bass','mid','high'].map((k,j)=>[k,Geo.mix(a[j],b[j],u)]));}
+  function features(t,live={},enabled=true){
+    const base={rms:0,bass:0,mid:0,high:0,event:0};if(!enabled)return base;
+    const recorded=envelope(t);Object.assign(base,recorded||live);
+    if(recorded)for(const k of ['bass','mid','high'])base[k]=Geo.clamp(base[k]+(live[k]||0)*.12);
+    for(const e of data?.events||[]){const dt=t-e.time;if(dt>=0&&dt<e.duration)base.event=Math.max(base.event,e.strength*Math.exp(-dt*3/e.duration));}
+    return base;
+  }
+  const originalLength={boot:5,creation:6,dimension:7,life:7,consciousness:5};
+  function render(t,w,h,live={},enabled=true){t=Geo.clamp(t,0,30);const s=scene(t);if(!s)return new ASCII.Grid(w,h);
+    const f=features(t,live,enabled),local=s=>((t-s.start)/(s.end-s.start))*originalLength[s.id];
+    let a=Scenes[s.id](local(s),w,h,f,s.params);const next=timeline[timeline.indexOf(s)+1];
+    if(next&&t>s.end-s.transition){const u=Geo.smooth(s.end-s.transition,s.end,t),b=Scenes[next.id](local(next),w,h,f,next.params);
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++){const ac=a.cells[y][x],bc=b.cells[y][x];if(bc[0]!==' '&&Geo.hash(x+y*w)<u)a.cells[y][x]=bc;else ac[2]=(ac[2]??1)*(1-u);}}
+    for(const e of data?.events||[]){const dt=t-e.time;if(!['first-entry','energy-break'].includes(e.label)||dt<0||dt>e.duration)continue;
+      const u=dt/e.duration,r=.06+u*1.35;
+      for(let layer=0;layer<3;layer++)for(let i=0;i<200;i++){const angle=i/200*Math.PI*2,rr=r-layer*.045;
+        Geo.point(a,Math.cos(angle)*rr,Math.sin(angle)*rr*1.6,layer===0?'#':'+',layer===1?3:1,(1-u)*.9);}}
+    return a;
+  }
+  R.Director={timeline,ready,configure,scene,render,features,envelope,setProfile:enabled=>{profileEnabled=enabled;},get data(){return data;}};
+})(globalThis);
+</script>
+    <script>(function (R) {
+  class AudioAnalysis {
+    constructor(audio) {
+      this.audio = audio;
+      this.context = null;
+      this.source = null;
+      this.analyser = null;
+      this.enabled = true;
+      this.failed = false;
+      this.value = { bass: 0, mid: 0, high: 0, rms: 0 };
+    }
+    async unlock() {
+      if (this.failed) return;
+      try {
+        if (!this.context) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) {
+            this.failed = true;
+            return;
+          }
+          this.context = new AC();
+        }
+        if (this.context.state === "suspended") await this.context.resume();
+        if (this.context.state !== "running") return;
+        if (!this.source) {
+          this.source = this.context.createMediaElementSource(this.audio);
+          this.source.connect(this.context.destination);
+          try {
+            this.analyser = this.context.createAnalyser();
+            this.analyser.fftSize = 2048;
+            this.analyser.smoothingTimeConstant = 0.4;
+            this.source.connect(this.analyser);
+            this.freq = new Uint8Array(this.analyser.frequencyBinCount);
+            this.wave = new Uint8Array(this.analyser.fftSize);
+          } catch (e) {
+            this.analyser = null;
+          }
+        }
+      } catch (e) {
+        this.failed = true;
+      }
+    }
+
+    sample() {
+      if (!this.enabled || !this.analyser || this.failed)
+        return { bass: 0, mid: 0, high: 0, rms: 0 };
+      if (this.audio.paused || this.audio.seeking || this.audio.readyState < 3)
+        return this.value;
+      this.analyser.getByteFrequencyData(this.freq);
+      this.analyser.getByteTimeDomainData(this.wave);
+      let sum = 0;
+      for (const x of this.wave) sum += ((x - 128) / 128) ** 2;
+      const binHz=this.context.sampleRate/this.analyser.fftSize;
+      const band=(lo,hi)=>{let sum=0,n=0;for(let i=Math.ceil(lo/binHz);i<Math.min(this.freq.length,hi/binHz);i++){sum+=(this.freq[i]/255)**2;n++;}return Math.min(1,Math.sqrt(sum/Math.max(1,n)));};
+      this.value = {bass:band(35,220),mid:band(220,2200),high:band(2200,9000),rms:Math.min(1,Math.sqrt(sum/this.wave.length)*2.3)};
+      return this.value;
+    }
+    reset() {
+      this.value = { bass: 0, mid: 0, high: 0, rms: 0 };
+    }
+  }
+  R.AudioAnalysis = AudioAnalysis;
+})(globalThis);
+</script>
+    <script>"use strict";
+const $ = (id) => document.getElementById(id),
+  a = $("audio"),
+  canvas = $("screen"),
+  ctx = canvas.getContext("2d");
+let sourceURL = "",
+  scrubbing = false,
+  resume = false,
+  lastKey = "",
+  needsResize = true,
+  isDemo = false;
+const palette = ["#526343", "#e6bf72", "#7bbd83", "#91d9cb"];
+const analysis = new AudioAnalysis(a);
+let lastRender = -1000,
+  frames = 0,
+  fps = 0,
+  fpsSince = 0;
+const previewEnd = () =>
+  Math.min(30, Number.isFinite(a.duration) ? a.duration : 30);
+
+const status = (s) => ($("status").textContent = s);
+function duration() {
+  return Number.isFinite(a.duration) ? Math.min(30, a.duration) : 0;
+}
+function seek(t) {
+  if (!duration()) return;
+  a.currentTime = ASCII.clamp(t, 0, duration());
+  lastKey = "";
+}
+async function play() {
+  if (!a.src) {
+    status("请先加载本地音频或原创测试音频");
+    return;
+  }
+  try {
+    await Director.ready;
+    if (a.ended || a.currentTime >= previewEnd() - 0.02) seek(0);
+    const unlocked = analysis.unlock();
+    const playing = a.play();
+    await playing;
+    await unlocked;
+    if (analysis.failed)
+      status("音频分析不可用，时间轴动画继续；可关闭音频响应。");
+  } catch (e) {
+    status(
+      "播放未启动，请再次点击播放；也可换用 Safari 支持的 MP3 / AAC / WAV。",
+    );
+  }
+}
+$("play").onclick = () => (a.paused ? play() : a.pause());
+function load(blob, demo) {
+  a.pause();
+  a.removeAttribute("src");
+  a.load();
+  if (sourceURL) URL.revokeObjectURL(sourceURL);
+  sourceURL = URL.createObjectURL(blob);
+  a.src = sourceURL;
+  isDemo = demo;
+  Director.setProfile(false);
+  analysis.reset();
+  a.load();
+  status(
+    demo
+      ? "原创 30 秒测试音轨已加载，点击播放"
+      : "本地音频已加载 · 实时频段驱动，正在识别校准音轨",
+  );
+  lastKey = "";
+}
+$("file").onchange = (e) => {
+  const file=e.target.files[0];if(!file)return;load(file,false);const selectedURL=sourceURL;
+  (async()=>{try{await Director.ready;const buffer=await file.arrayBuffer();const digest=await crypto.subtle.digest('SHA-256',buffer);const hash=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');if(sourceURL!==selectedURL)return;
+    const match=hash===Director.data.audioSHA256;Director.setProfile(match);status(match?'已识别校准音轨 · 本机分析包络 + 实时 FFT':'其他音频 · 实时频段响应，分镜仍按提供音轨编排');lastKey='';
+  }catch(e){if(sourceURL===selectedURL)status('实时音频响应可用；音轨识别需要 HTTPS 或 localhost。');}})();
+};
+// Original synthesized arpeggio, pad and pulse; no third-party music.
+$("demo").onclick = () => {
+  const rate = 22050,
+    n = Math.ceil(ASCII.duration * rate),
+    buffer = new ArrayBuffer(44 + n * 2),
+    v = new DataView(buffer);
+  function str(p, s) {
+    for (let i = 0; i < s.length; i++) v.setUint8(p + i, s.charCodeAt(i));
+  }
+  str(0, "RIFF");
+  v.setUint32(4, 36 + n * 2, true);
+  str(8, "WAVE");
+  str(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, "data");
+  v.setUint32(40, n * 2, true);
+  const notes = [130.81, 164.81, 196, 261.63, 220, 196, 164.81, 146.83];
+  for (let i = 0; i < n; i++) {
+    const t = i / rate,
+      beat = t % 0.5,
+      note = notes[Math.floor(t * 2) % notes.length],
+      env = Math.exp(-beat * 8) * Math.min(1, beat * 150);
+    const pad = Math.sin(2 * Math.PI * 65.405 * t) * 0.12;
+    const bell =
+      (Math.sin(2 * Math.PI * note * t) +
+        0.3 * Math.sin(2 * Math.PI * note * 2 * t)) *
+      env *
+      0.25;
+    const pulse =
+      Math.sin(
+        2 * Math.PI * (55 * (t % 0.5) + 4 * (1 - Math.exp(-(t % 0.5) * 20))),
+      ) *
+      Math.exp(-(t % 0.5) * 23) *
+      0.24;
+    const fade = Math.min(1, t * 2, (30 - t) * 2);
+    v.setInt16(
+      44 + i * 2,
+      Math.max(-1, Math.min(1, (pad + bell + pulse) * fade)) * 24000,
+      true,
+    );
+  }
+  load(new Blob([buffer], { type: "audio/wav" }), true);
+};
+$("restart").onclick = () => seek(0);
+$("hideControls").onclick = () => {
+  document.body.classList.add("immersive");
+  $("showControls").hidden = false;
+};
+$("showControls").onclick = () => {
+  document.body.classList.remove("immersive");
+  $("showControls").hidden = true;
+};
+$("reactive").onchange = () => {
+  analysis.enabled = $("reactive").checked;
+  lastKey = "";
+};
+$("debugToggle").onchange = () => {
+  $("debug").hidden = !$("debugToggle").checked;
+};
+a.addEventListener("seeking", () => {
+  analysis.reset();
+  lastKey = "";
+});
+$("back").onclick = () => seek(a.currentTime - 5);
+$("forward").onclick = () => seek(a.currentTime + 5);
+$("chapter").onchange = (e) =>
+  seek(Number(e.target.value) - Number($("offset").value || 0));
+$("grid").onchange = () => {
+  needsResize = true;
+};
+$("offset").oninput = () => {
+  lastKey = "";
+};
+function beginScrub() {
+  if (scrubbing) return;
+  scrubbing = true;
+  resume = !a.paused;
+  a.pause();
+}
+$("seek").oninput = () => {
+  beginScrub();
+  seek(Number($("seek").value));
+};
+function finishScrub() {
+  if (!scrubbing) return;
+  scrubbing = false;
+  if (resume) play();
+  resume = false;
+}
+$("seek").onchange = finishScrub;
+$("seek").addEventListener("pointerup", finishScrub);
+$("seek").addEventListener("pointercancel", finishScrub);
+for (const ev of ["play", "pause", "ended"])
+  a.addEventListener(ev, () => {
+    $("play").textContent = a.paused ? "播放" : "暂停";
+    lastKey = "";
+  });
+a.addEventListener("loadedmetadata", () => {
+  $("seek").max = duration();
+  lastKey = "";
+});
+a.addEventListener("error", () =>
+  status("音频读取失败，请选择 Safari 支持的 MP3 / AAC / WAV 文件。"),
+);
+$("fullscreen").onclick = async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen)
+      await document.documentElement.requestFullscreen();
+    else status("此 Safari 不支持网页全屏，可通过“添加到主屏幕”打开。");
+  } catch (e) {
+    status("无法进入全屏，可使用 Safari“添加到主屏幕”。");
+  }
+};
+new ResizeObserver(() => {
+  needsResize = true;
+}).observe($("stage"));
+document.addEventListener("visibilitychange", () => {
+  needsResize = true;
+  lastKey = "";
+});
+document.addEventListener("keydown", (e) => {
+  if (/INPUT|SELECT|BUTTON/.test(e.target.tagName)) return;
+  if (e.code === "Space") {
+    e.preventDefault();
+    $("play").click();
+  }
+  if (e.code === "ArrowRight") seek(a.currentTime + 5);
+  if (e.code === "ArrowLeft") seek(a.currentTime - 5);
+});
+function stamp(t) {
+  return `${String(Math.floor(t / 60)).padStart(2, "0")}:${(t % 60).toFixed(1).padStart(4, "0")}`;
+}
+function loop(now) {
+  if (a.currentTime >= previewEnd() && !a.paused) {
+    a.pause();
+    a.currentTime = previewEnd();
+  }
+  const [w, h] = $("grid").value.split(",").map(Number),
+    t = ASCII.timeline(a.currentTime, Number($("offset").value) || 0),
+    key = `${t.toFixed(4)},${w},${h},${$("reactive").checked}`;
+  if (needsResize) {
+    const r = $("stage").getBoundingClientRect(),
+      ratio = 16 / 9;
+    const width = Math.min(r.width, r.height * ratio),
+      height = width / ratio,
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    needsResize = false;
+    lastKey = "";
+  }
+  if (
+    key !== lastKey &&
+    now - lastRender >= 1000 / Number($("quality").value) - 1
+  ) {
+    lastRender =
+      now - ((now - lastRender) % (1000 / Number($("quality").value)));
+    const features = analysis.sample();
+    const g = Director.render(t, w, h, features, $("reactive").checked),
+      cw = canvas.width / w,
+      ch = canvas.height / h;
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = `${Math.min(ch * 0.94, cw * 1.65)}px ui-monospace, Menlo, monospace`;
+    ctx.textBaseline = "middle";
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const [char, color, alpha = 1] = g.cells[y][x];
+        if (char && char !== " " && alpha > 0.01) {
+          ctx.globalAlpha = Math.min(
+            1,
+            alpha *
+              (0.93 + 0.07 * Math.cos(y * 0.8 - t * 2)) *
+              (1 + Math.min(0.06, features.rms * 0.2)),
+          );
+          ctx.fillStyle = palette[color];
+          ctx.fillText(
+            char,
+            x * cw,
+            (y + 0.5) * ch,
+            cw * ASCII.cellWidth(char),
+          );
+        }
+      }
+    ctx.globalAlpha = 1;
+    lastKey = key;
+    frames++;
+  }
+  if (now - fpsSince > 1000) {
+    fps = Math.round((frames * 1000) / (now - fpsSince));
+    frames = 0;
+    fpsSince = now;
+  }
+  canvas.dataset.scene = (Director.scene(t)?.id || "loading");
+  canvas.dataset.time = t.toFixed(3);
+  $("debug").textContent =
+    `${(Director.scene(t)?.name || "LOADING TIMELINE")} | ${t.toFixed(2)}s | ${fps} FPS | ${analysis.analyser && !analysis.failed ? "FFT ready" : "FFT off"}`;
+  if (!scrubbing) $("seek").value = a.currentTime;
+  $("time").textContent = stamp(a.currentTime) + " / " + stamp(previewEnd());
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+Director.ready.then(()=>{const menu=$("chapter");menu.replaceChildren(...Director.timeline.map((s,i)=>{const o=document.createElement('option');o.value=s.start;o.textContent=`0${i+1} · ${s.name} / ${s.start.toFixed(3)}s`;return o;}));lastKey='';}).catch(e=>status('时间轴加载失败，请通过 HTTP/HTTPS 打开网页并检查 music-timeline.json'));
+</script>
+  </body>
+</html>

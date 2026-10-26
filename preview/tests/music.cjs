@@ -1,0 +1,7 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');require('../core.js');require('../geometry.js');require('../scenes.js');require('../director.js');Director.configure(JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'../music-timeline.json'))));
+const chars=g=>g.cells.map(row=>row.map(c=>c[0]).join('')).join('\n');
+for(const [w,h] of [[80,30],[100,36],[128,44]])for(let i=0;i<=900;i++){const g=Director.render(i/30,w,h);assert.equal(g.cells.length,h);assert(g.cells.flat().every(c=>c[2]===undefined||Number.isFinite(c[2])));if(i<897)assert(chars(g).trim().length>0);}
+for(const t of [5.887,12.013,20.773,26.111])for(const dt of [-.001,0,.001])assert(chars(Director.render(t+dt,100,36)).trim().length>30);
+for(const t of [7,15,23,27]){const quiet=chars(Director.render(t,100,36,{bass:0,mid:0,high:0,rms:0}));const loud=chars(Director.render(t,100,36,{bass:1,mid:1,high:1,rms:1}));const diff=[...quiet].filter((c,i)=>c!==loud[i]).length;assert(diff>30,`insufficient geometry response ${t}: ${diff}`);console.log('character-position differences',t,diff);}
+Director.setProfile(true);for(const t of [0,6,15,21,28]){const a=chars(Director.render(t,100,36));Director.render(2,100,36);Director.render(25,100,36);assert.equal(a,chars(Director.render(t,100,36)));}assert(Director.envelope(2).rms<.001);assert(Director.envelope(22).rms>Director.envelope(2).rms);
+console.log('PASS: 2703 full-timeline renders, boundaries, geometric response, matching-profile seek reproducibility');

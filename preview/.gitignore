@@ -1,0 +1,6 @@
+*.mp3
+*.aac
+*.wav
+*.m4a
+private-analysis/
+__pycache__/
