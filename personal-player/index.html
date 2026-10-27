@@ -1,0 +1,212 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>SEED / Fixed Soundtrack</title><style>*{box-sizing:border-box}html,body{margin:0;background:#070b0a;color:#b3bfae;font:13px ui-monospace,Menlo,Consolas,monospace;height:100%;color-scheme:dark}body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}header{height:74px;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #283a2e}b{color:#efc884;letter-spacing:.23em;font-size:19px}b span{font-size:12px;color:#79977e;letter-spacing:.12em}small{display:block;font-size:10px;margin-top:7px;letter-spacing:.07em}main{height:calc(100% - 74px);display:flex;flex-direction:column}#stage{position:relative;flex:1;min-height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#020605}canvas{display:block;max-width:100%;max-height:100%;aspect-ratio:16/9}#controls{padding:10px 20px 12px;border-top:1px solid #283a2e;background:#0c120f}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}button,select,.file{border:1px solid #40533e;border-radius:3px;background:#131d17;color:#c9d7bd;min-height:44px;padding:8px 12px;font:inherit;cursor:pointer;touch-action:manipulation}button:hover,.file:hover{border-color:#e8be76}#play{color:#f7d393}input[type=file]{position:absolute;width:1px;height:1px;opacity:0}input[type=range]{width:100%;height:26px;accent-color:#e6bd78;touch-action:pan-y}.bottom{font-size:11px}#status{flex:1;min-width:180px;color:#809380}output{margin-left:auto;color:#e6bd78}.immersive header,.immersive #controls{display:none}.immersive main{height:100%}.immersive #stage{cursor:pointer}@media(max-width:700px){header{height:62px;padding:9px 12px}b span{display:none}main{height:calc(100% - 62px)}#controls{padding:6px 10px}.row{gap:5px}button,select,.file{font-size:11px;padding:6px 9px}.bottom #status{font-size:10px}small{font-size:8px}}
+
+#stage:after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 65px 10px rgba(0,0,0,.2)}
+</style></head><body>
+<header><div><b>SEED<span> / PRIVATE SOUNDTRACK</span></b><small>PERSONAL PLAYBACK · 209s SOUNDTRACK · 7.5s VISUAL SAMPLE</small></div><button id="immersive">沉浸 / 返回</button></header>
+<main><div id="stage"><canvas id="screen" width="1400" height="788" aria-label="SEED ASCII 音乐影像"></canvas></div><section id="controls"><div class="row"><label class="file">首次选择 MP3<input id="file" type="file" accept=".mp3,.m4a,.aac,.wav,audio/*"></label><label class="file">或选择视频<input id="videoFile" type="file" accept=".mp4,.mov,video/*"></label><button id="sample">播放已有 7.5 秒样片</button><button id="play">播放</button><button id="restart">从头播放</button><select id="grid" aria-label="字符精度"><option value="100,36">100 × 36 标准</option><option value="128,44">128 × 44 精细</option><option value="80,30">80 × 30 性能</option></select><select id="fps" aria-label="帧率"><option>30</option><option>24</option></select><output id="time">0.000</output></div><input id="seek" type="range" min="0" max="209.016" step="0.001" value="0" aria-label="时间轴"><div class="row bottom"><select id="chapter" aria-label="镜头"><option value="15.44125">01 / 数据风暴</option><option value="16.83125">02 / 虚拟世界</option><option value="18.66725">03 / 世界核心</option><option value="20.76225">04 / 系统重组</option></select><label><input id="crt" type="checkbox" checked> CRT</label><span id="status">检查本机已保存的音轨…</span></div></section></main><audio id="audio" preload="metadata" playsinline></audio><script>
+/* Original SEED scene system. No third-party animation code or images. */
+(function(R){
+'use strict';
+const START=20.773,END=28.273, cuts=[START,22.163,23.999,26.094,END];
+const hits=[20.773,21.225,21.694,22.163,22.632,23.081,23.55,23.999,24.478,24.927,25.395,25.854,26.313,26.772,27.231,27.67,28.139];
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),mix=(a,b,t)=>a+(b-a)*t;
+const ease=(a,b,t)=>{let x=clamp((t-a)/(b-a));return x*x*(3-2*x)};
+function pulse(t){return hits.reduce((v,h)=>Math.max(v,t>=h?Math.exp(-(t-h)*13):0),0)}
+function scene(t){return t<cuts[1]?0:t<cuts[2]?1:t<cuts[3]?2:3}
+class Grid{
+ constructor(w,h){this.w=w;this.h=h;this.ch=Array(w*h).fill(' ');this.col=Array(w*h).fill(0)}
+ put(x,y,c,col=2){x=Math.floor(x);y=Math.floor(y);if(x>=0&&x<this.w&&y>=0&&y<this.h){let i=y*this.w+x;this.ch[i]=c;this.col[i]=col}}
+ text(x,y,s,col=2){[...s].forEach((c,i)=>this.put(x+i,y,c,col))}
+ box(x,y,w,h,label,col=2){for(let j=0;j<h;j++)for(let i=0;i<w;i++)this.put(x+i,y+j,j===0||j===h-1?(i===0||i===w-1?'+':'-'):(i===0||i===w-1?'|':' '),col);if(label)this.text(x+2,y,' '+label+' ',col)}
+}
+const words=['ALLOC 0x','NODE::','CACHE/','LINK  ','000111','101001','COMMIT','READ> ','SYNC::','MAP(x)'];
+function backdrop(g,t){for(let y=1;y<g.h-1;y++)for(let x=0;x<g.w;x++){let r=(x+Math.floor(t*4)+y*7)%23;g.put(x,y,r<6?words[y%10][r]:(x%8===0?'|':(y%4===0?'-':'.')),0)}}
+function panel(g,x,y,w,h,label,t,col=2){g.box(x,y,w,h,label,col);for(let j=2;j<h-1;j++){let s=(j%3===0?'[OK] ':'> ')+words[(j+Math.floor(t*5))%10]+' '+((j*7919+Math.floor(t*12))%65536).toString(16).padStart(4,'0');g.text(x+2,y+j,s.slice(0,w-4),j%4===0?3:col)}}
+const font={S:['11111','10000','10000','11111','00001','00001','11111'],E:['11111','10000','10000','11110','10000','10000','11111'],D:['11110','10001','10001','10001','10001','10001','11110'],C:['01111','10000','10000','10000','10000','10000','01111'],O:['01110','10001','10001','10001','10001','10001','01110'],R:['11110','10001','10001','11110','10100','10010','10001']};
+function big(g,word,x,y,sx,sy,t,col=1){for(let n=0;n<word.length;n++){let f=font[word[n]];if(!f)continue;for(let j=0;j<7*sy;j++)for(let i=0;i<5*sx;i++)if(f[Math.floor(j/sy)][Math.floor(i/sx)]==='1')g.put(x+n*6*sx+i,y+j,'SEED01#+'[(i+j+Math.floor(t*3))%8],col)}}
+function storm(g,t,motion){let w=g.w,h=g.h,p=motion?pulse(t):.3,u=motion?ease(START,21.06,t):1;
+ backdrop(g,t);let pw=Math.floor(w*.25),side=Math.floor(w*.03),hh=Math.floor(h*.39);
+ let spread=motion?Math.floor(p*2):0;panel(g,side-spread,3,pw,hh,'MEMORY',t,2);panel(g,w-pw-side+spread,4,pw,hh,'PROCESSES',t+2,2);
+ panel(g,side,h-hh-3,pw,hh,'SIGNAL',t,3);panel(g,w-pw-side,h-hh-2,pw,hh,'COMPILE',t,2);
+ let cx=w*.5,cy=h*.49,cw=Math.floor(w*(.36+p*.025)*u),ch=Math.floor(h*.68*u);
+ // Conductive traces connect diagnostic windows to the processor.
+ for(let y=6;y<h-3;y+=3){for(let x=pw+side;x<w-pw-side;x++){let gap=Math.abs(x-cx);if(gap>cw*.5)g.put(x,y,x%7===0?'+':'=',y%2?0:2)}}
+ let x0=Math.floor(cx-cw/2),y0=Math.floor(cy-ch/2);
+ for(let y=y0-1;y<y0+ch+1;y++)for(let x=x0-2;x<x0+cw+2;x++)g.put(x,y,(y===y0-1||y===y0+ch)?(x%3?'|':'!'):(x===x0-2||x===x0+cw+1?'=':' '),1);
+ g.box(x0,y0,cw,ch,'SEED / KERNEL',1);
+ for(let y=y0+2;y<y0+ch-1;y++)for(let x=x0+2;x<x0+cw-2;x++){let a=x-x0,b=y-y0;let circuit=(a%7===0||b%4===0);g.put(x,y,circuit?(a%7===0&&b%4===0?'+':a%7===0?'|':'='):'01:;'.charAt((a*3+b+Math.floor(t*8))%4),circuit?2:0)}
+ let bw=Math.floor(cw*.67),bh=Math.floor(ch*.44);g.box(Math.floor(cx-bw/2),Math.floor(cy-bh/2),bw,bh,'EXEC',3);
+ g.text(Math.floor(cx-7),Math.floor(cy),'[ SEED::01 ]',1);g.text(Math.floor(cx-7),Math.floor(cy+2),'WORLD = NEW;',2);
+ if(p>.5){let row=Math.floor((t*19)%Math.max(1,h-4))+2;for(let x=0;x<w;x++)g.put(x,row,x%4===0?'+':'=',3)}
+ for(let x=0;x<w;x++)g.put(x,1,' ',0);g.text(3,1,'SEED / SIMULATION HOST       THREAD 001',1);g.text(3,h-2,'INPUT -> PARSE -> ALLOCATE -> COMPILE',2);
+}
+function poly(g,pts,shader){let lo=Math.max(0,Math.floor(Math.min(...pts.map(p=>p[1])))),hi=Math.min(g.h-1,Math.ceil(Math.max(...pts.map(p=>p[1]))));for(let y=lo;y<=hi;y++){let xs=[];for(let i=0;i<pts.length;i++){let a=pts[i],b=pts[(i+1)%pts.length];if((a[1]<=y+.5&&b[1]>y+.5)||(b[1]<=y+.5&&a[1]>y+.5))xs.push(a[0]+(y+.5-a[1])*(b[0]-a[0])/(b[1]-a[1]))}xs.sort((a,b)=>a-b);for(let j=0;j<xs.length;j+=2)for(let x=Math.max(0,Math.floor(xs[j]));x<Math.min(g.w,xs[j+1]);x++){let s=shader(x,y);g.put(x,y,s[0],s[1])}}}
+function world(g,t,motion){let w=g.w,h=g.h,u=motion?ease(cuts[1],23.22,t):1,pan=motion?(t-cuts[1])*.8:0,beat=motion?pulse(t):0;
+ for(let y=2;y<h*.47;y++)for(let x=0;x<w;x++)g.put(x,y,y%5===0?'_':x%9===0?':':'.',0);
+ // Ground is a filled surface with address lanes, not a wireframe horizon.
+ for(let y=Math.floor(h*.43);y<h-1;y++)for(let x=0;x<w;x++){let z=(y/h-.4),a=Math.floor((x-w*.49)/(z+.12)*.13+pan*3),b=Math.floor(18/(z+.15)-t*5);let edge=a%9===0||b%7===0;g.put(x,y,edge?((a+b)%4?':':'+'):'.,_='[(Math.abs(a)+b+1000)%4],edge?2:0)}
+ // Rear terraces, central avenue, foreground tower blocks; painter depth ordering.
+ const blocks=[[-8,21,3,7],[-3,23,3,9],[2,24,4,11],[7,22,3,8],[-10,16,4,10],[-5,16,3,7],[3,16,3,9],[8,15,4,12],[-9,10,4,8],[-5,9,2.5,6],[4,10,3,10],[8,9,4,8],[-7,5,3,7],[5,5,3,9]];
+ const project=(x,y,z)=>[w*.5+(x-pan)*w*.91/(z+9),h*.47+(4.5-y)*h*1.15/(z+9)];
+ for(let k=0;k<blocks.length;k++){let [x,z,bw,bh]=blocks[k];let grow=clamp(u*1.6-k*.035);bh*=grow;if(bh<.01)continue;let d=3;let A=project(x,0,z),B=project(x+bw,0,z),C=project(x+bw,bh,z),D=project(x,bh,z),E=project(x+bw,bh,z+d),F=project(x+bw,0,z+d),G=project(x,bh,z+d);
+ if(x<pan)poly(g,[B,F,E,C],(xx,yy)=>[':|:+'[(xx+yy)%4],2]);else poly(g,[A,project(x,0,z+d),G,D],(xx,yy)=>[':|:+'[(xx+yy)%4],2]);
+ poly(g,[D,C,E,G],(xx,yy)=>['=/+#'[(xx+yy)%4],k%3===0?1:2]);
+ poly(g,[A,B,C,D],(xx,yy)=>{let edge=xx<=Math.floor(A[0])+1||xx>=Math.floor(B[0])-1;let floor=(yy-Math.floor(D[1]))%3;return [edge?'|':floor===0?'=':(xx%3===0?'|':(xx+yy+k)%5===0?'#':'H'),edge?1:floor===0?2:((yy+Math.floor(t*7)+k)%9<2?3:0)]});
+ g.text(Math.floor(D[0])+1,Math.ceil(D[1])+1,('0'+k).slice(-2),1);
+ }
+ let scan=Math.floor(mix(h-2,3,u));if(u<.99)for(let x=0;x<w;x++)g.put(x,scan,'=+=='[x%4],3);
+ for(let x=0;x<w;x++)g.put(x,1,' ',0);g.text(3,1,'SEED / HABITAT ARRAY    SECTOR 07',1);g.text(3,h-2,'SURFACE MAPPED  //  '+Math.floor(u*100)+'%   > WORLD.CONTINUE()',2);
+}
+function core(g,t,motion){let w=g.w,h=g.h,tt=motion?t:25.1,p=motion?pulse(t):0;backdrop(g,tt);
+ // A chamber of densely stacked processor racks provides depth around the core.
+ for(let side=0;side<2;side++)for(let y=3;y<h-3;y++)for(let x=0;x<w*.2;x++){let xx=side?w-1-x:x;g.put(xx,y,y%4===0?'=':x%6===0?'|':(x+y)%3===0?'0':':',y%4===0?2:0)}
+ let zoom=motion?mix(.94,1.11,ease(24,26.094,t)):1,cx=w*.51+(motion?Math.sin((t-24)*.7)*w*.015:0),cy=h*.49,rx=w*.323*zoom,ry=h*.43*zoom;
+ // Filled ellipsoid, lit surface, moving meridians, diagonal cutaway reveals die stack.
+ for(let y=2;y<h-2;y++)for(let x=0;x<w;x++){let slice=motion?Math.floor((y/h)*8):0,split=motion?Math.sin(slice*1.7)*p*1.5:0;let X=(x-cx-split)/rx,Y=(y-cy)/ry,r2=X*X+Y*Y;if(r2>1)continue;let Z=Math.sqrt(1-r2),lon=Math.atan2(X,Z)+tt*.45,lat=Math.asin(Y);let band=Math.sin(lon*13+lat*7),row=Math.floor((lat+2)*19),col=Math.floor(lon*25);let cut=Math.abs(X*.65+Y*.45)<.21+p*.04;
+ let ch,color;
+ if(cut){let q=Math.floor((X-Y)*28+tt*8);ch=(row%4===0?'=':'01<>[]'[((q%6)+6)%6]);color=row%4===0?3:1;if(Math.abs(X*.65+Y*.45)<.035){ch='@';color=3}}
+ else {let light=clamp(Z*.62-X*.35-Y*.25);ch=light<.3?'.:,;'[(Math.abs(row+col))%4]:light<.6?'x+=*'[(Math.abs(row+col))%4]:'H#%@'[(Math.abs(row+col))%4];if(Math.abs(band)<.15){ch='|';color=1}else color=light>.65?2:0;if(row%5===0){ch='-';color=2}}
+ if(r2>.91){ch=(x+y)%2?'#':'+';color=1}g.put(x,y,ch,color);
+ }
+ // Stepped sockets and annotated side channels, distinct from the curved casing.
+ for(let k=0;k<4;k++){let y=Math.floor(h*.22+k*h*.17);g.text(2,y,['THERMAL','CACHE','VECTOR','OUTPUT'][k],2);g.text(2,y+1,('['+'#'.repeat(3+Math.floor((tt*4+k)%5))+'.'.repeat(8)+']').slice(0,14),1);g.text(w-16,y,'BUS '+(k*1024).toString(16).padStart(4,'0'),3);g.text(w-16,y+1,'<==:==:==:==>',0)}
+ for(let x=0;x<w;x++)g.put(x,1,' ',0);g.text(3,1,'SEED / COMPUTE CHAMBER        CORE 001',1);g.text(3,h-2,'MATERIAL: LOGIC   |   STATE: SENTIENT',2);
+}
+function recompose(g,t,motion){let w=g.w,h=g.h,u=motion?clamp((t-cuts[3])/(END-cuts[3])):.8;core(g,25.9,true);
+ let old=g.ch.slice(),colors=g.col.slice();
+ // Rectangular memory pages separate as coherent pieces of the previous image.
+ for(let y=2;y<h-2;y++)for(let x=0;x<w;x++){let by=Math.floor(y/3),bx=Math.floor(x/12),dir=by%2?1:-1,shift=Math.floor((ease(0,.63,u)*(4+by%4*7)+(motion?pulse(t)*4:0))*dir),sy=y-Math.floor(Math.sin(bx*2)*ease(.1,.6,u)*5),sx=x-shift;let i=sy*w+sx;g.put(x,y,sx>=0&&sx<w&&sy>=2&&sy<h-2?old[i]:'.',sx>=0&&sx<w&&sy>=2&&sy<h-2?colors[i]:0)}
+ let reveal=ease(.28,.73,u),sy=Math.max(1,Math.floor(h/18)),sx=Math.max(2,Math.floor(w/29)),tw=23*sx,th=7*sy,x0=Math.floor((w-tw)/2),y0=Math.floor((h-th)/2);
+ if(reveal>0){let maskW=Math.floor(w*reveal);for(let y=y0-2;y<y0+th+2;y++)for(let x=0;x<maskW;x++)g.put(x,y,y===y0-2||y===y0+th+1?'=':' ',y===y0-2?3:0);let letters=new Grid(w,h);big(letters,'SEED',x0,y0,sx,sy,t,1);for(let y=y0;y<y0+th;y++)for(let x=0;x<maskW;x++)if(letters.ch[y*w+x]!==' ')g.put(x,y,letters.ch[y*w+x],1);
+ g.text(x0,y0+th+3,'SELF / EVOLVING / EXECUTION / DOMAIN'.slice(0,w-x0-1),3)}
+ let scan=Math.floor(u*(h-4))+2;if(u<.8)for(let x=0;x<w;x++)g.put(x,scan,'=:=:'[x%4],3);
+ for(let x=0;x<w;x++)g.put(x,1,' ',0);g.text(3,1,'SEED / MEMORY RECOMPOSITION      NO ROLLBACK',1);g.text(3,h-2,u>.85?'[01] WORLD IS A PROCESS.  > AWAIT INPUT_':'PAGES DETACHED -> IDENTITY REASSEMBLING',2);
+}
+function render(t,w=100,h=36,options={}){t=clamp(t,START,END);let g=new Grid(w,h),s=scene(t);[storm,world,core,recompose][s](g,t,options.motion!==false);
+ // Spatial handoff: processor pages become building slabs, then city opens to core.
+ if(options.motion!==false&&s>0){let d=t-cuts[s];if(d<.18){let prev=new Grid(w,h);[storm,world,core][s-1](prev,cuts[s]-.001,true);let edge=d/.18*w;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x>edge+(y%4)*2){g.put(x,y,prev.ch[y*w+x],prev.col[y*w+x])}}}
+ return g}
+R.Seed={START,END,cuts,hits,scene,render,pulse,Grid};if(typeof module!=='undefined')module.exports=R.Seed;
+})(typeof window!=='undefined'?window:globalThis);
+
+</script><script>
+window.TRACK={"sha256": "a589770f3bfebc109d4bcb05ce37c77be0f1c2829dd27c835494ff2c35b811a5", "duration": 209.016, "bytes": 3344493};
+</script><script>
+"use strict";
+const $=id=>document.getElementById(id);
+const audio=$('audio'),canvas=$('screen'),ctx=canvas.getContext('2d',{alpha:false});
+const palette=['#375449','#efca86','#78b785','#a0e3d2'];
+const LEGACY_AUDIO_OFFSET=5.33175, CLIP_START=Seed.START-LEGACY_AUDIO_OFFSET,CLIP_END=Seed.END-LEGACY_AUDIO_OFFSET;
+const STORE_KEY='seed-personal-audio-209-v2';
+let atlas=null,activeGrid='',previous=null,previousCRT=null,last=-1,lastKey='';
+let blobURL='',selectedName='',audioMode='',timelineReady=false,mediaReady=false,cacheSaved=false,pausedPreviewTime=CLIP_START;
+const status=s=>{$('status').textContent=s};
+function duration(){return Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:TRACK.duration}
+function clock(){return mediaReady?audio.currentTime:pausedPreviewTime}
+function paint(t){
+ const [w,h]=$('grid').value.split(',').map(Number);
+ if(!atlas||activeGrid!==w+','+h||previousCRT!==$('crt').checked)makeAtlas(w,h);
+ const sceneTime=Math.min(Seed.END,Math.max(Seed.START,t+LEGACY_AUDIO_OFFSET));
+ const g=Seed.render(sceneTime,w,h);
+ for(let i=0;i<g.ch.length;i++){
+  if(previous&&previous.ch[i]===g.ch[i]&&previous.col[i]===g.col[i])continue;
+  let c=g.ch[i].charCodeAt(0)-32;if(c<0||c>94)c=0;
+  ctx.drawImage(atlas,c*14,g.col[i]*22,14,22,(i%w)*14,Math.floor(i/w)*22,14,22);
+ }
+ previous=g;canvas.dataset.scene=Seed.scene(sceneTime);canvas.dataset.time=t.toFixed(3);
+ $('seek').value=t;$('time').textContent=t.toFixed(3)+' / '+duration().toFixed(3);
+}
+function makeAtlas(w,h){
+ const cw=14,ch=22;atlas=document.createElement('canvas');atlas.width=95*cw;atlas.height=palette.length*ch;
+ const a=atlas.getContext('2d',{alpha:false});a.fillStyle='#030806';a.fillRect(0,0,atlas.width,atlas.height);
+ a.font='18px Menlo,Consolas,monospace';a.textAlign='center';a.textBaseline='middle';
+ for(let col=0;col<palette.length;col++){
+  a.fillStyle=palette[col];for(let i=0;i<95;i++)a.fillText(String.fromCharCode(32+i),i*cw+cw/2,col*ch+ch/2);
+ }
+ if($('crt').checked){a.fillStyle='rgba(0,0,0,.13)';for(let y=1;y<atlas.height;y+=4)a.fillRect(0,y,atlas.width,1)}
+ activeGrid=w+','+h;canvas.width=w*cw;canvas.height=h*ch;previous=null;previousCRT=$('crt').checked;ctx.imageSmoothingEnabled=false;
+}
+function resize(){const box=$('stage').getBoundingClientRect(),w=Math.min(box.width,box.height*16/9);canvas.style.width=w+'px';canvas.style.height=w*9/16+'px'}
+function seek(t){
+ t=Math.max(0,Math.min(duration(),t));pausedPreviewTime=t;
+ if(mediaReady){try{audio.currentTime=t}catch(e){status('音频暂时不能跳转：'+e.message)}}
+ lastKey='';paint(t);
+}
+async function play(){
+ if(!mediaReady){status('首次请从“文件”中选择 209 秒 MP3，或选择包含同一音轨的视频；文件不会上传到服务器。');return}
+ if(audio.ended)seek(CLIP_START);
+ try{await audio.play();status((cacheSaved?'已读取本机保存音轨':'当前会话音轨')+' · 正在播放 · 已有动画 '+CLIP_START.toFixed(2)+'—'+CLIP_END.toFixed(2)+' 秒')}
+ catch(e){status('播放未启动：'+e.name+'。请再点击播放。')}
+}
+$('play').onclick=()=>audio.paused?play():audio.pause();
+$('restart').onclick=()=>{seek(0);play()};
+$('sample').onclick=()=>{seek(CLIP_START);play()};
+$('seek').oninput=e=>seek(Number(e.target.value));
+$('chapter').onchange=e=>seek(Number(e.target.value)-LEGACY_AUDIO_OFFSET);
+$('grid').onchange=$('crt').onchange=()=>{atlas=null;lastKey='';paint(clock())};
+$('immersive').onclick=()=>{document.body.classList.toggle('immersive');resize()};
+$('stage').onclick=()=>{if(document.body.classList.contains('immersive')){$('immersive').click()}};
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{if(e.target.matches('input,select'))return;
+ if(e.code==='Space'){e.preventDefault();$('play').click()}
+ if(e.code==='ArrowLeft')seek(clock()-5);if(e.code==='ArrowRight')seek(clock()+5);
+ if(e.code==='Escape'){document.body.classList.remove('immersive');resize()}
+});
+audio.addEventListener('loadedmetadata',()=>{
+ mediaReady=true;const d=audio.duration;if(Number.isFinite(d)&&d>0){$('seek').max=d}
+ seek(Math.min(pausedPreviewTime,duration()));
+ const sameDuration=Math.abs(duration()-TRACK.duration)<.7;
+ status((cacheSaved?'本机保存音轨已就绪':'音轨已就绪')+' · '+duration().toFixed(2)+' 秒 · '+(sameDuration?'可按209秒时间轴试听':'时长不匹配，可能不同步！'));
+});
+audio.addEventListener('play',()=>{$('play').textContent='暂停'});
+audio.addEventListener('pause',()=>{$('play').textContent='播放'});
+audio.addEventListener('error',()=>{mediaReady=false;status('音频解码失败：请尝试 Safari 支持的 MP3 或 MP4 文件。')});
+audio.addEventListener('seeking',()=>{lastKey=''});
+for(const e of ['seeked','timeupdate','loadeddata'])audio.addEventListener(e,()=>{lastKey='';paint(clock())});
+function useMedia(blob,name,restored=false){
+ if(blobURL)URL.revokeObjectURL(blobURL);blobURL=URL.createObjectURL(blob);
+ selectedName=name;mediaReady=false;audio.pause();audio.src=blobURL;audio.load();
+ if(restored)status('正在读取本机保存的音轨…');else status('正在载入 '+name+'…');
+}
+function openDB(){return new Promise((resolve,reject)=>{
+ if(!('indexedDB' in window)){reject(Error('此浏览器不支持本地文件存储'));return}
+ const req=indexedDB.open('seed-personal-player',2);
+ req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks')};
+ req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||Error('IndexedDB 访问失败'));
+})}
+async function cacheWrite(value){const d=await openDB();try{return await new Promise((resolve,reject)=>{
+ const tx=d.transaction('tracks','readwrite');tx.objectStore('tracks').put(value,STORE_KEY);
+ tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error||Error('无法保存音轨'));tx.onabort=()=>reject(tx.error||Error('保存已中断'));
+})}finally{d.close()}}
+async function cacheRead(){const d=await openDB();try{return await new Promise((resolve,reject)=>{
+ const tx=d.transaction('tracks','readonly');const req=tx.objectStore('tracks').get(STORE_KEY);
+ req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||Error('读取失败'));
+})}finally{d.close()}}
+async function importMedia(e){const f=e.target.files?.[0];e.target.value='';if(!f)return;
+ try{
+  useMedia(f,f.name);cacheSaved=false;
+  let exact=false;
+  if(f.size===TRACK.bytes&&window.crypto?.subtle){
+   try{let hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await f.arrayBuffer())),v=>v.toString(16).padStart(2,'0')).join('');exact=hash===TRACK.sha256}catch(e){}
+  }
+  try{await cacheWrite({blob:f,name:f.name,exact});cacheSaved=true;status((exact?'209秒固定音轨已校验':'音轨已保存（未校验为原MP3）')+' · 后续打开无需重复选择 · 点击播放')}
+  catch(err){status('本次音轨已载入，但浏览器未保存：'+err.message+'。下次可能需重新选择。')}
+ }catch(err){status('载入失败：'+err.message)}
+}
+$('file').onchange=$('videoFile').onchange=importMedia;
+async function restore(){try{
+ const entry=await cacheRead();if(entry?.blob){cacheSaved=true;useMedia(entry.blob,entry.name||'本机音轨',true)}
+ else status('首次选择一次本地 209 秒音轨（MP3 或包含同一音乐的视频）。文件只保存在你的浏览器中，不会上传 GitHub。');
+ }catch(e){status('无法读取本机存储，请选择一次音频。Safari 私密浏览或清除网站数据后可能需要重新导入。')}
+}
+function loop(now){const targetFPS=Number($('fps').value)||30;
+ if(now-last>=1000/targetFPS-1){last=now;
+ const t=clock(),key=t.toFixed(3)+'/'+$('grid').value+'/'+$('crt').checked;
+ if(key!==lastKey){paint(t);lastKey=key}
+ }
+ requestAnimationFrame(loop)
+}
+window.Pilot={paint,seek,clock,clipStart:CLIP_START,clipEnd:CLIP_END};
+resize();paint(CLIP_START);requestAnimationFrame(loop);restore();
+
+</script></body></html>
