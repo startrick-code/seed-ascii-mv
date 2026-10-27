@@ -1,0 +1,210 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>SEED / First Reply</title><style>*{box-sizing:border-box}html,body{margin:0;background:#070b0a;color:#b3bfae;font:13px ui-monospace,Menlo,Consolas,monospace;height:100%;color-scheme:dark}body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}header{height:74px;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #283a2e}b{color:#efc884;letter-spacing:.23em;font-size:19px}b span{font-size:12px;color:#79977e;letter-spacing:.12em}small{display:block;font-size:10px;margin-top:7px;letter-spacing:.07em}main{height:calc(100% - 74px);display:flex;flex-direction:column}#stage{position:relative;flex:1;min-height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#020605}canvas{display:block;max-width:100%;max-height:100%;aspect-ratio:16/9}#controls{padding:10px 20px 12px;border-top:1px solid #283a2e;background:#0c120f}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}button,select,.file{border:1px solid #40533e;border-radius:3px;background:#131d17;color:#c9d7bd;min-height:44px;padding:8px 12px;font:inherit;cursor:pointer;touch-action:manipulation}button:hover,.file:hover{border-color:#e8be76}#play{color:#f7d393}input[type=file]{position:absolute;width:1px;height:1px;opacity:0}input[type=range]{width:100%;height:26px;accent-color:#e6bd78;touch-action:pan-y}.bottom{font-size:11px}#status{flex:1;min-width:180px;color:#809380}output{margin-left:auto;color:#e6bd78}.immersive header,.immersive #controls{display:none}.immersive main{height:100%}.immersive #stage{cursor:pointer}@media(max-width:700px){header{height:62px;padding:9px 12px}b span{display:none}main{height:calc(100% - 62px)}#controls{padding:6px 10px}.row{gap:5px}button,select,.file{font-size:11px;padding:6px 9px}.bottom #status{font-size:10px}small{font-size:8px}}
+
+#stage:after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 65px 10px rgba(0,0,0,.2)}
+</style></head><body>
+<header><div><b>SEED<span> / THE FIRST REPLY</span></b><small>PRIVATE STUDY · 11.200 — 21.600 · AN ORIGINAL ASCII SHORT / 10.4s</small></div><button id="immersive">沉浸 / 返回</button></header>
+<main><div id="stage"><canvas id="screen" width="1400" height="788" aria-label="SEED ASCII 音乐影像"></canvas></div><section id="controls"><div class="row"><label class="file">导入本地音乐<input id="file" type="file" accept="audio/*"></label><button id="play">播放</button><button id="restart">回到起点</button><button id="silent">无声故事</button><select id="grid" aria-label="字符精度"><option value="100,36">100 × 36 标准</option><option value="128,44">128 × 44 精细</option><option value="80,30">80 × 30 性能</option></select><select id="fps" aria-label="帧率"><option>30</option><option>24</option></select><output id="time">11.200</output></div><input id="seek" type="range" min="11.200" max="21.600" step="0.001" value="11.200" aria-label="时间轴"><div class="row bottom"><select id="chapter" aria-label="镜头"><option value="11.2">01 / 创建意图</option><option value="12.16">02 / 形成</option><option value="13.55">03 / 受阻</option><option value="14.85">04 / 修复</option><option value="16.75">05 / 选择</option><option value="19.55">06 / 回应</option></select><label><input id="labels" type="checkbox">画面标签</label><label><input id="reactive" type="checkbox" checked>音频响应</label><label><input id="crt" type="checkbox" checked> CRT</label><span id="status">音乐仅在本机读取。请导入完整歌曲；无声故事使用独立演示时钟。</span></div></section></main><audio id="audio" preload="auto" playsinline></audio><script>
+/* Original ASCII stage and persistent character designs for THE FIRST REPLY. */
+(function(R){'use strict';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),mix=(a,b,u)=>a+(b-a)*u;
+class Grid{constructor(w,h){this.w=w;this.h=h;this.ch=Array(w*h).fill(' ');this.col=Array(w*h).fill(0)}put(x,y,c,k=2){x=Math.floor(x);y=Math.floor(y);if(x>=0&&x<this.w&&y>=0&&y<this.h){this.ch[y*this.w+x]=c;this.col[y*this.w+x]=k}}}
+class Raster{constructor(g,camera){this.g=g;this.cam=camera||[50,18,1]}p(x,y){return [(50+(x-this.cam[0])*this.cam[2])*this.g.w/100,(18+(y-this.cam[1])*this.cam[2])*this.g.h/36]}put(x,y,c,k){let p=this.p(x,y);this.g.put(...p,c,k)}poly(points,shader){let ps=points.map(v=>this.p(...v)),g=this.g;let y0=Math.max(0,Math.floor(Math.min(...ps.map(v=>v[1])))),y1=Math.min(g.h-1,Math.ceil(Math.max(...ps.map(v=>v[1]))));for(let y=y0;y<=y1;y++){let xs=[];ps.forEach((a,i)=>{let b=ps[(i+1)%ps.length];if((a[1]<=y+.5&&b[1]>y+.5)||(b[1]<=y+.5&&a[1]>y+.5))xs.push(a[0]+(y+.5-a[1])*(b[0]-a[0])/(b[1]-a[1]))});xs.sort((a,b)=>a-b);for(let j=0;j<xs.length;j+=2)for(let x=Math.max(0,Math.floor(xs[j]));x<Math.min(g.w,xs[j+1]);x++){let wx=(x/g.w*100-50)/this.cam[2]+this.cam[0],wy=(y/g.h*36-18)/this.cam[2]+this.cam[1],s=shader(wx,wy);if(s)g.put(x,y,s[0],s[1])}}}rect(x,y,w,h,c='#',k=2){this.poly([[x,y],[x+w,y],[x+w,y+h],[x,y+h]],()=>[c,k])}line(x0,y0,x1,y1,c='=',k=2,thick=1){let a=this.p(x0,y0),b=this.p(x1,y1),n=Math.max(1,Math.ceil(Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]))));for(let i=0;i<=n;i++)for(let d=0;d<thick;d++)this.g.put(mix(a[0],b[0],i/n),mix(a[1],b[1],i/n)+d,c,k)}text(x,y,s,k){let a=this.p(x,y);[...s].forEach((c,i)=>this.g.put(a[0]+i,a[1],c,k))}}
+function set(r,p,f){
+ // Layered circuit architecture: rear memory wall, sockets, buswork, grounded floor.
+ r.poly([[-20,-10],[120,-10],[120,45],[-20,45]],(x,y)=>{let a=Math.floor(x),b=Math.floor(y);return [(a%9===0&&b%4===0)?'+':b%4===0?'-':a%9===0?'|':'.',0]});
+ for(let side of [0,1]){let x=side?91:1;r.rect(x,4,8,25,' ',0);for(let y=5;y<28;y++){r.line(x,y,x+7,y,y%4===0?'=':'|',y%4===0?2:0);for(let j=1;j<7;j+=2)r.put(x+j,y,y%4===1?'#':':',0)}}
+ for(let j=0;j<3;j++){r.rect(5+j*31,-1,25,5,' ',0);r.line(5+j*31,0,30+j*31,0,'=',2);r.line(5+j*31,3,30+j*31,3,'=',0);for(let x=7+j*31;x<30+j*31;x++)r.put(x,1,'01:|'[(x+j)%4],0)}
+ r.poly([[3,29],[96,29],[112,40],[-12,40]],(x,y)=>{let a=Math.floor(x),b=Math.floor(y);return [b%3===0?'=':a%7===0?'|':(a+b)%3?':':'#',b%3===0?2:0]});
+ // Raised physical socket under the created being. Failure tears its actual support.
+ let drop=p.crack*(1-p.repair)*2;r.poly([[58,27],[90,27+drop],[94,30+drop],[55,30]],(x,y)=>[Math.floor(y)%2?'#':'=',p.crack>.5?1:2]);r.line(58,26,88,26,'_',2);
+ // Slotted data columns behind A (not explanatory labels).
+ for(let y=7;y<27;y+=4){r.rect(7,y,22,2,':',0);r.line(7,y,28,y,'=',0);for(let x=9;x<27;x+=4)r.put(x,y+1,'#',2)}
+ // Rear frame of the incubation chamber, with a textured roof and base.
+ r.rect(56,5,36,3,'=',0);for(let x=56;x<92;x+=3)r.put(x,6,'H',2);
+ r.line(56,7,56,26,'|',0);r.line(91,7,91,26,'|',0);
+ let aperture=13-7*p.pressure,bc=76;
+ for(let side of [-1,1]){let x=bc+side*aperture; let jy=8-p.release*3,jh=18*(1-p.release)+2*p.release;r.rect(x-1,jy,3,jh,'H',p.pressure>.55?1:2);r.line(x,jy,x,jy+jh-1,'|',3);for(let yy=jy+1;yy<jy+jh-1;yy+=3)r.line(x,yy,x-side*2,yy,side<0?'>':'<',1)}
+ // The repair slider is physically wired to the same two pressure jaws.
+ r.line(43,28,53,28,'=',2);r.line(53,28,53,10,'|',0);r.line(53,10,62,10,'=',0);
+ let hy=22+7*p.release;r.rect(50,21,6,11,':',0);r.line(52,21,52,31,'|',2);r.rect(49,hy-.5,8,3,'#',4);r.rect(50,hy,6,2,' ',0);r.put(52,hy,'+',1);
+ if(p.release>0){r.line(55,hy+1,59,hy+1,'=',1);r.line(59,hy+1,59,10,'|',1);r.line(59,10,bc-aperture,10,'>',3)}
+ // Sound affects loaded machinery only; narrative pressure remains deterministic.
+ if(p.pressure>.3){let amp=Math.min(2,f.bass*1.5);for(let j=0;j<3;j++)r.line(88+amp,12+j*4,92,13+j*4,'/',1)}
+}
+function token(r,x,y,k=3,size=1){r.rect(x-size,y,size*2+1,1,'=',k);r.rect(x,y-size,1,size*2+1,'+',k);r.put(x,y,'@',k)}
+function creator(r,p){let x=p.ax,y=p.ay,angle=p.tilt||0;const tr=(a,b)=>[x+a*Math.cos(angle)-b*Math.sin(angle),y+a*Math.sin(angle)+b*Math.cos(angle)];let pts=[[-8,-8],[9,0],[0,2],[-4,9],[-7,7],[-4,1],[-9,4]].map(v=>tr(...v));r.poly(pts,(wx,wy)=>{let a=wx-x,b=wy-y;return [Math.floor(a+b)%4===0?'=':'#',Math.floor(a-b)%5===0?5:1]});
+ // Dark eye inset and a pupil make direction and surprise readable at 80 columns.
+ let eye=tr(-3,-2);r.rect(eye[0]-2,eye[1]-1,5,3,' ',0);r.rect(eye[0]+(p.surprise?0:1),eye[1],p.surprise?2:1,1,p.surprise?'O':'@',4);
+ if(p.returned)token(r,x-3,y+3,3,1);
+}
+function entity(r,p,f){if(p.form<=0)return;let x=p.bx,y=p.by,squash=p.pressure*.14,face=p.form>.7;let height=13*(1-squash),top=y-height/2;
+ const body=[[-7,-height/2],[-4,-height/2-1],[5,-height/2-1],[8,-height/2+2],[8,height/2-1],[5,height/2+1],[-5,height/2+1],[-8,height/2-1]];
+ let fracture=p.crack*(1-p.repair),assemble=top+height*p.form;
+ function map(a,b){let low=b>1;return [x+a*(1-p.pressure*.18)+(low?fracture*3:0),y+b+(low?fracture*3:0)]}
+ r.poly(body.map(v=>map(...v)),(wx,wy)=>{if(wy>assemble+1&&p.form<1)return null;let low=wy>y+1,xx=wx-x-(low?fracture*3:0),yy=wy-y-(low?fracture*3:0);if(fracture>.05&&Math.abs(yy-(1+xx*.08))<fracture*1.5)return [' ',0];let edge=Math.abs(xx)>6||yy<-height/2+1||yy>height/2-1;return [edge?'H':(Math.floor(xx)+Math.floor(yy)+60)%3===0?'#':':',edge?3:2]});
+ // Persistent offset antenna, forehead plate, two deep-set eyes, two boots.
+ r.line(x-3,top-1,x-3,top-3,'|',3);r.line(x-3,top-3,x+1,top-3,'=',3);r.put(x+1,top-2,'+',1);
+ if(face){r.rect(x-5,y-3,10,3,' ',0);let eye=p.crack>.5&&p.repair<.4?'x':p.blink?'-':'@';r.rect(x-4+(p.gaze||0),y-2,2,1,eye,p.crack>.5?1:4);r.rect(x+2+(p.gaze||0),y-2,2,1,eye,p.crack>.5?1:4);r.line(x-2,y+1,x+2,y+1,p.repair>.7?'_':'-',3)}
+ if(p.form>.95){let st=p.step||0;let dx=fracture*3,dy=fracture*3;r.rect(x-6+dx,y+height/2+2+dy-st,4,2,'#',3);r.rect(x+2+dx,y+height/2+2+dy+st,4,2,'#',3)}
+ // Clear shoulder-to-hand gesture; on distress it reaches toward A, then rests.
+ if(p.arm>0){r.line(x-7,y+2,x-8-p.arm*9,y+1,'=',3,2);r.rect(x-10-p.arm*9,y,3,3,'#',3)}
+ if(p.repair>0){r.line(x-5,y+2,x+5,y+2,'=',1);r.rect(x-1,y+1,3,3,'#',1)}
+ // RMS controls a physical chest aperture, never the timing of birth/repair/reply.
+ if(p.form>.95&&p.crack<.3){let width=1+Math.floor(clamp(f.rms*2.5)*3);r.rect(x-width,y+4,width*2+1,1,'=',3)}
+}
+function drawPose(p,w=100,h=36,opts={}){let g=new Grid(w,h),r=new Raster(g,p.camera),f={rms:clamp(opts.features?.rms||0),bass:clamp(opts.features?.bass||0)};set(r,p,f);
+ // A's outbound construction pulse follows a continuous path into the same body.
+ if(p.beam>0){let end=mix(p.ax+9,69,p.beam);let thickness=1+Math.round(clamp(f.rms*2)*2);r.line(p.ax+8,p.ay,end,p.by-1,'=',p.crack>.5?0:1,thickness);token(r,end,p.by-1,1,1)}
+ if(p.patch>0){let x=mix(55,p.bx,p.patch),y=mix(28,p.by+2,p.patch);r.line(55,28,x,y,'=',1);r.rect(x-2,y-1,5,3,'#',1)}
+ entity(r,p,f);creator(r,p);if(p.ax>40&&p.release<1){let hy=22+7*p.release;r.rect(50,hy,6,2,'#',4);r.put(52,hy,'+',0)}
+ if(p.echo>0){let x=mix(p.bx-16,p.ax-3,p.echo);token(r,x,mix(p.by+1,p.ay+3,p.echo),3,2)}
+ if(p.surprise){r.line(p.ax-10,p.ay-11,p.ax-8,p.ay-9,'/',4);r.line(p.ax+1,p.ay-12,p.ax,p.ay-10,'|',4)}
+ if(opts.labels){r.text(3,1,'SEED / FIRST REPLY',1);r.text(70,34,p.name||'',3)}
+ return g;
+}
+const base={ax:23,ay:16,bx:76,by:18,tilt:0,form:1,pressure:0,crack:0,release:0,repair:0,beam:0,patch:0,arm:0,echo:0,returned:false,surprise:false,gaze:-1,step:0,camera:[50,18,1]};
+const presets=[
+ {name:'01',form:0,ax:20,tilt:-.1},
+ {name:'02',form:.1,ax:28,beam:.7,tilt:.08},
+ {name:'03',form:.65,ax:28,beam:1,camera:[58,18,1.2]},
+ {name:'04',form:1,ax:26,beam:.3,camera:[58,18,1.2]},
+ {name:'05',pressure:.7,crack:.5,ax:24,arm:.4,camera:[61,19,1.22]},
+ {name:'06',pressure:1,crack:1,ax:22,arm:.7,tilt:-.15,camera:[59,20,1.2]},
+ {name:'07',pressure:1,crack:1,ax:43,ay:22,tilt:.05,arm:.5,camera:[60,21,1.15]},
+ {name:'08',pressure:.3,crack:1,release:.8,ax:43,ay:27.6,patch:.5,repair:.2,camera:[60,21,1.15]},
+ {name:'09',release:1,repair:1,ax:38,ay:23,camera:[53,20,1.05]},
+ {name:'10',release:1,repair:1,ax:29,ay:16,bx:65,step:1,camera:[50,19,1.06]},
+ {name:'11',release:1,repair:1,ax:29,ay:16,bx:60,arm:1,echo:.2,camera:[45,18,1.25]},
+ {name:'12',release:1,repair:1,ax:27.5,ay:15.5,bx:60,arm:1,echo:1,returned:true,surprise:true,tilt:-.12,camera:[45,18,1.25]}
+].map(x=>({...base,...x}));
+R.NarrativeArt={Grid,Raster,drawPose,presets,base};if(typeof module!=='undefined')module.exports=R.NarrativeArt;
+})(typeof window!=='undefined'?window:globalThis);
+
+</script><script>
+/* Absolute song time -> a complete causal pose. No integrator, random state or FFT-triggered plot. */
+(function(R){'use strict';const START=11.2,END=21.6,cuts=[START,12.16,13.55,14.85,16.75,19.55,END];
+const clamp=(x)=>Math.max(0,Math.min(1,x)),mix=(a,b,u)=>a+(b-a)*u;
+function ease(a,b,t){let u=clamp((t-a)/(b-a));return u*u*(3-2*u)}
+function scene(t){for(let i=0;i<6;i++)if(t<cuts[i+1])return i;return 5}
+function pose(t){t=Math.max(START,Math.min(END,t));let p={...R.NarrativeArt.base};
+ p.form=ease(12.12,13.28,t);p.pressure=ease(13.55,14.05,t);p.crack=ease(14.03,14.48,t);p.release=ease(15.6,16.15,t);p.pressure*=1-p.release;p.repair=ease(16.48,16.85,t);
+ p.ax=20-2*ease(11.2,11.55,t)+10*ease(11.55,12.16,t)-5*ease(13.9,14.35,t)+20*ease(14.85,15.42,t);
+ p.ay=16+6*ease(14.85,15.42,t)+7*p.release;
+ let retreat=ease(16.65,17.65,t);p.ax=mix(p.ax,29,retreat);p.ay=mix(p.ay,16,retreat);
+ p.tilt=-.1+.18*ease(11.55,12.16,t)-.22*ease(13.9,14.35,t)+.17*ease(14.85,15.42,t);p.tilt*=1-retreat;
+ p.beam=t<13.55?ease(11.75,12.16,t)*(1-ease(13.28,13.55,t)):0;
+ p.arm=.65*ease(14.05,14.35,t)*(1-ease(16.25,16.85,t));
+ p.patch=t>=15.95&&t<16.85?ease(15.95,16.5,t):0;
+ p.bx=76+.5*ease(18.1,18.3,t)-7.5*ease(18.3,18.82,t)-9*ease(19.0,19.48,t);
+ p.by=18+.8*(ease(18.1,18.3,t)-ease(18.3,18.55,t));
+ if(t>=18.3&&t<18.82)p.step=Math.sin(clamp((t-18.3)/.52)*Math.PI)*1.5;
+ if(t>=19&&t<19.48)p.step=-Math.sin(clamp((t-19)/.48)*Math.PI)*1.5;
+ p.gaze=t>17.3&&t<17.7?1:-1;p.blink=(t>13.3&&t<13.38)||(t>17.85&&t<17.96);
+ p.arm=Math.max(p.arm,ease(19.55,20.15,t));
+ p.echo=t>=19.95&&t<20.95?Math.max(.001,ease(20.32,20.773,t)):0;
+ p.returned=t>=20.773;p.surprise=t>=20.773;
+ let surprise=ease(20.773,20.98,t);p.ax-=2.5*surprise;p.ay-=1.2*surprise;p.tilt-=.12*surprise;
+ const cams=[[50,18,1],[60,18,1.25],[68,20,1.55],[60,22,1.12],[51,19,1],[44,18,1.25]];p.camera=cams[scene(t)].slice();
+ if(scene(t)===0)p.camera[2]+=ease(11.2,12.16,t)*.07;
+ p.name=['INTENT','CREATE','CONSTRAINT','REPAIR','CHOICE','REPLY'][scene(t)];return p;
+}
+function render(t,w=100,h=36,opts={}){return R.NarrativeArt.drawPose(pose(t),w,h,opts)}
+R.Seed={START,END,cuts,scene,pose,render};if(typeof module!=='undefined')module.exports=R.Seed;
+})(typeof window!=='undefined'?window:globalThis);
+
+</script><script>
+(function (R) {
+  class AudioAnalysis {
+    constructor(audio) {
+      this.audio = audio;
+      this.context = null;
+      this.source = null;
+      this.analyser = null;
+      this.enabled = true;
+      this.failed = false;
+      this.value = { bass: 0, rms: 0 };
+    }
+    async unlock() {
+      if (this.failed) return;
+      try {
+        if (!this.context) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) {
+            this.failed = true;
+            return;
+          }
+          this.context = new AC();
+        }
+        if (this.context.state === "suspended") await this.context.resume();
+        if (this.context.state !== "running") return;
+        if (!this.source) {
+          this.source = this.context.createMediaElementSource(this.audio);
+          this.source.connect(this.context.destination);
+          try {
+            this.analyser = this.context.createAnalyser();
+            this.analyser.fftSize = 1024;
+            this.analyser.smoothingTimeConstant = 0.4;
+            this.source.connect(this.analyser);
+            this.freq = new Uint8Array(this.analyser.frequencyBinCount);
+            this.wave = new Uint8Array(this.analyser.fftSize);
+          } catch (e) {
+            this.analyser = null;
+          }
+        }
+      } catch (e) {
+        this.failed = true;
+      }
+    }
+
+    sample() {
+      if (!this.enabled || !this.analyser || this.failed)
+        return { bass: 0, rms: 0 };
+      if (this.audio.paused || this.audio.seeking || this.audio.readyState < 3)
+        return this.value;
+      this.analyser.getByteFrequencyData(this.freq);
+      this.analyser.getByteTimeDomainData(this.wave);
+      let sum = 0;
+      for (const x of this.wave) sum += ((x - 128) / 128) ** 2;
+      let bass = 0;
+      const n = Math.max(1, Math.floor(220 / (this.context.sampleRate / 1024)));
+      for (let i = 1; i <= n; i++) bass += this.freq[i] / 255;
+      this.value = { bass: bass / n, rms: Math.sqrt(sum / this.wave.length) };
+      return this.value;
+    }
+    reset() {
+      this.value = { bass: 0, rms: 0 };
+    }
+  }
+  R.AudioAnalysis = AudioAnalysis;
+})(globalThis);
+
+</script><script>
+'use strict';
+const $=id=>document.getElementById(id),audio=$('audio'),canvas=$('screen'),ctx=canvas.getContext('2d',{alpha:false}),analysis=new AudioAnalysis(audio);
+const palette=['#294638','#f1c779','#77bb87','#9be1d2','#ffefc6','#a17e47'];
+let url='',silent=false,running=false,silentT=Seed.START,anchor=0,last=-1,lastKey='',atlas=null,activeGrid='',frameCount=0,frameStart=0,measuredFPS=0,previous=null,previousCRT=null,lastFeatures={rms:0,bass:0};
+const status=s=>$('status').textContent=s;
+function clock(){return silent?(running?Math.min(Seed.END,silentT+(performance.now()-anchor)/1000):silentT):(audio.src?Math.max(Seed.START,Math.min(Seed.END,audio.currentTime)):silentT)}
+function stop(){if(silent){silentT=clock();running=false}else audio.pause();$('play').textContent='播放'}
+function seek(t){t=Math.max(Seed.START,Math.min(Seed.END,t));analysis.reset();lastFeatures={rms:0,bass:0};if(silent||!audio.src){silentT=t;anchor=performance.now()}else audio.currentTime=t;lastKey='';paint(t)}
+async function play(){if(!silent&&!audio.src){status('请导入本地完整音乐，或点击无声预览');return}if(clock()>=Seed.END-.025)seek(Seed.START);if(silent){anchor=performance.now();running=true}else{try{const unlock=analysis.unlock();await audio.play();await unlock}catch(e){status('未能播放，请再次点击，或选择 Safari 支持的 MP3 / AAC 文件');return}}$('play').textContent='暂停'}
+$('play').onclick=()=>((silent?running:!audio.paused)?stop():play());$('restart').onclick=()=>seek(Seed.START);
+$('silent').onclick=()=>{stop();silent=true;lastFeatures={rms:0,bass:0};silentT=Seed.START;lastKey='';status('无声演示：独立时钟；导入音乐后切回音频主时钟');play()};
+$('file').onchange=e=>{let f=e.target.files[0];if(!f)return;e.target.value='';stop();silent=false;audio.removeAttribute('src');audio.load();if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(f);audio.src=url;audio.load();status('读取本地音频…')};
+audio.addEventListener('loadedmetadata',()=>{if(audio.duration<Seed.END){status('音频短于 21.600 秒。请导入完整歌曲，不能使用裁切片段');audio.removeAttribute('src');audio.load();return}seek(Seed.START);status('音乐就绪 · 点击播放 · 可关闭画面标签观看故事')});
+audio.addEventListener('error',()=>status('音频无法解码，请选择 MP3 / AAC / WAV 文件'));
+audio.addEventListener('seeking',()=>{analysis.reset();lastKey=''});audio.addEventListener('pause',()=>{$('play').textContent='播放'});audio.addEventListener('ended',stop);
+$('seek').oninput=e=>seek(+e.target.value);$('chapter').onchange=e=>seek(+e.target.value);$('grid').onchange=()=>{atlas=null;lastKey='';paint(clock())};$('crt').onchange=()=>{lastKey='';paint(clock())};
+$('immersive').onclick=()=>{document.body.classList.toggle('immersive');resize()};$('stage').onclick=()=>{if(document.body.classList.contains('immersive')){document.body.classList.remove('immersive');resize()}};
+window.addEventListener('keydown',e=>{if(e.target.matches('input,select'))return;if(e.code==='Space'){e.preventDefault();$('play').click()}if(e.code==='ArrowLeft')seek(clock()-.25);if(e.code==='ArrowRight')seek(clock()+.25);if(e.code==='Escape'){document.body.classList.remove('immersive');resize()}});
+function resize(){let box=$('stage').getBoundingClientRect(),w=Math.min(box.width,box.height*16/9);canvas.style.width=w+'px';canvas.style.height=w*9/16+'px'}window.addEventListener('resize',resize);
+function makeAtlas(w,h){const cw=14,ch=22;atlas=document.createElement('canvas');atlas.width=95*cw;atlas.height=palette.length*ch;let a=atlas.getContext('2d',{alpha:false});a.fillStyle='#030806';a.fillRect(0,0,atlas.width,atlas.height);a.font='18px Menlo,Consolas,monospace';a.textAlign='center';a.textBaseline='middle';for(let c=0;c<palette.length;c++){a.fillStyle=palette[c];for(let i=0;i<95;i++)a.fillText(String.fromCharCode(32+i),i*cw+cw/2,c*ch+ch/2)}if($('crt').checked){a.fillStyle='rgba(0,0,0,.13)';for(let y=1;y<atlas.height;y+=4)a.fillRect(0,y,atlas.width,1)}activeGrid=w+','+h;canvas.width=w*cw;canvas.height=h*ch;previous=null;previousCRT=$('crt').checked;ctx.imageSmoothingEnabled=false}
+function paint(t,opts={}){let [w,h]=$('grid').value.split(',').map(Number);if(!atlas||activeGrid!==w+','+h||previousCRT!==$('crt').checked)makeAtlas(w,h);let g=Seed.render(t,w,h,{labels:$('labels').checked,features:$('reactive').checked?lastFeatures:{rms:0,bass:0},...opts});for(let i=0;i<g.ch.length;i++){if(previous&&previous.ch[i]===g.ch[i]&&previous.col[i]===g.col[i])continue;let c=g.ch[i].charCodeAt(0)-32;if(c<0||c>94)c=0;ctx.drawImage(atlas,c*14,g.col[i]*22,14,22,(i%w)*14,Math.floor(i/w)*22,14,22)}previous=g;
+ canvas.dataset.scene=Seed.scene(t);canvas.dataset.time=t.toFixed(3);$('seek').value=t;$('time').textContent=t.toFixed(3)+' / 21.600';return g}
+function loop(now){if(now-last>=1000/+$('fps').value-1){last=now-((now-last)%(1000/+$('fps').value));let t=clock();if(t>=Seed.END&&(running||!audio.paused)){stop();if(!silent&&audio.src)audio.currentTime=Seed.END}let key=t.toFixed(4)+'/'+$('grid').value;if(key!==lastKey){if(!silent&&!audio.paused&&!audio.seeking)lastFeatures=analysis.sample();paint(t);lastKey=key;frameCount++}if(now-frameStart>1000){measuredFPS=frameCount;frameCount=0;frameStart=now}}requestAnimationFrame(loop)}
+// Read-only capture/control API also makes deterministic scene inspection reproducible.
+window.Pilot={paint,seek,clock,get fps(){return measuredFPS},get analysis(){return analysis},get features(){return {...lastFeatures}}};
+$('labels').onchange=$('reactive').onchange=()=>{lastKey='';paint(clock())};
+resize();paint(Seed.START);requestAnimationFrame(loop);
+
+</script></body></html>
